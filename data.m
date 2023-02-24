@@ -13,8 +13,8 @@ M = 4;
 data_num = 4000;
 data_length = 1000;
 
-% t = datetime('now');
-% save_path = "data_save/"+t.Month+"."+t.Day;
+t = datetime('now');
+save_path_tmp = "data_save/"+t.Month+"."+t.Day;
 % if(~exist(save_path,'dir'))
 %     mkdir(char(save_path));
 % end
@@ -23,7 +23,7 @@ K = 9; % channel length
 h = randn(K,1); % channel
 saveH = 'save_h';
 eval([saveH,'=h;']);
-save_path_h = "data_save/line_data";
+save_path_h = "data_save/"+t.Month+"."+t.Day+"/data";
 if(~exist(save_path_h,'dir'))
     mkdir(char(save_path_h));
 end
@@ -33,7 +33,7 @@ save(save_path_h+"/save_h.mat",saveH);
 % ls_esi
 %%
 for snr = 2:4:50
-    save_path = "data_save/line_data/snr"+snr;
+    save_path = save_path_tmp + "/data/snr"+snr;
     if(~exist(save_path,'dir'))
         mkdir(char(save_path));
     end
@@ -66,7 +66,12 @@ for snr = 2:4:50
             fprintf('loop = %d dB , snr = %d dB , save time=%d .\n',snr,round(snr_real),i);
         end
     end
-    fsnr = fopen(save_path+"/snr_beforecorrect.txt",'w');
+    
+    if snr == snr_begin
+        fsnr = fopen(save_path_h+"/snr.txt",'w');
+    else
+        fsnr = fopen(save_path_h+"/snr.txt",'a');
+    end
     fprintf(fsnr,' snr = %.8f \r\n',snr_real);
     fclose(fsnr);
 end

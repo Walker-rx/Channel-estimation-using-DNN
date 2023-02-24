@@ -1,11 +1,11 @@
 clear 
 close all
 
-save_path = "data_save/2.20";
-snr_begin = 2;
-snr_end = 50;
+save_path = "data_save/2.23";
+snr_begin = -6;
+snr_end = 42;
 % snr = 2;
-fprintf("This is linear network \n");
+fprintf("This is Twononlinear network , v4 \n");
 for snr = snr_begin:4:snr_end
     clearvars -except snr save_path snr_begin snr_end
     fprintf("snr = %d begin \n",snr);
@@ -13,31 +13,54 @@ for snr = snr_begin:4:snr_end
     load_data
 
     totalNum = data_num;
-    trainNum = floor(totalNum/2);
+    trainNum = floor(totalNum*0.8);
     xTrain = x(1:trainNum);
     yTrain = y(1:trainNum);
     xTest = x(trainNum+1:end);
     yTest = y(trainNum+1:end);
 
-    h_order = length(yTrain{1}) - length(xTrain{1}) + 1;
+    h_order = 30;
     inputSize = h_order;
-    numHiddenUnits = 5;
-    outputSize = 1;  % y=h*x+n;  y:(outputSize,m) h:(outputSize,inputSize) x:(inputSize,m)
+    numHiddenUnits = 15;
+    outputSize = 6;  % y=h*x+n;  y:(outputSize,m) h:(outputSize,inputSize) x:(inputSize,m)
     maxEpochs = 200;
-    miniBatchSize = 20;
+    miniBatchSize = 40;
 
     for i = 1:numel(xTrain)
+%         xTrain{i} = [zeros(15,1);xTrain{i}];
         xTrain{i} = toeplitz(xTrain{i}(h_order:-1:1),xTrain{i}(h_order:end));
+%         xTrain_p2 = toeplitz([0,xTrain{i}(length(xTrain{i})...
+%                                           :-1:...
+%                                           length(xTrain{i})-(h_order-2)...
+%                                           ).'...
+%                              ],...
+%                              zeros(1,h_order-1));
+%         xTrain{i} = [xTrain_p1,xTrain_p2];
+        yTrain{i} = reshape(yTrain{i}(1:6000),outputSize,1000);
+        yTrain{i} = yTrain{i}(:,1:size(xTrain{i},2));
+
+    end
+    for i = 1:numel(xTest)
+%         xTest{i} = [zeros(15,1);xTest{i}];
         xTest{i} = toeplitz(xTest{i}(h_order:-1:1),xTest{i}(h_order:end));
-        yTrain{i} = yTrain{i}(h_order:length(yTrain{i})-(h_order-1)).';
-        yTest{i} = yTest{i}(h_order:length(yTest{i})-(h_order-1)).';
+%         xTest_p2 = toeplitz([0,xTest{i}(length(xTest{i})...
+%                                           :-1:...
+%                                           length(xTest{i})-(h_order-2)...
+%                                           ).'...
+%                              ],...
+%                              zeros(1,h_order-1));
+%         xTest{i} = [xTest_p1,xTest_p2];
+        yTest{i} = reshape(yTest{i}(1:6000),outputSize,1000);
+        yTest{i} = yTest{i}(:,1:size(xTest{i},2));
     end
     validationFrequency = floor(size(xTrain{1},2)/miniBatchSize);
 
     layers = [...
         sequenceInputLayer(inputSize)
-%         fullyConnectedLayer(numHiddenUnits)
-%         reluLayer
+        fullyConnectedLayer(numHiddenUnits)
+        reluLayer
+        fullyConnectedLayer(numHiddenUnits)
+        reluLayer
         fullyConnectedLayer(outputSize)
         regressionLayer];
     options = trainingOptions('adam', ...
@@ -47,8 +70,8 @@ for snr = snr_begin:4:snr_end
         'SequenceLength','longest', ...
         'Shuffle','every-epoch', ...
         'LearnRateSchedule','piecewise',...
-        'LearnRateDropFactor',0.9,...
-        'LearnRateDropPeriod',20,...
+        'LearnRateDropFactor',0.8,...
+        'LearnRateDropPeriod',30,...
         'ValidationData',{xTest,yTest},...
         'ValidationFrequency',validationFrequency,...
         'ValidationPatience',5,...
@@ -65,8 +88,8 @@ for snr = snr_begin:4:snr_end
     mseNum = cellfun(@(cell1,cell2)mse(cell1,cell2),y_hatT,yTest);
     Mse = mean(mseNum);
 
-    savePath_mat = save_path + "/result/linear/snr" + snr;
-    savePath_txt = save_path + "/result/linear";
+    savePath_mat = save_path + "/result/Twononlinear/snr" + snr;
+    savePath_txt = save_path + "/result/Twononlinear";
     if(~exist(savePath_mat,'dir'))
         mkdir(char(savePath_mat));
     end
@@ -87,11 +110,9 @@ for snr = snr_begin:4:snr_end
             disp(progress);
         end
     end
-    save_equalNum = 'saveEqualNum';
-    save_mseNum = 'saveMseNum';
-    eval([save_equalNum,'=equalNum;']);
+    
+    save_mseNum = 'saveMseNum';    
     eval([save_mseNum,'=mseNum;']);
-    save(savePath_mat+"/save_equalNum.mat",save_equalNum);
     save(savePath_mat+"/save_mseNum.mat",save_mseNum);
 
     if snr == snr_begin
@@ -100,11 +121,11 @@ for snr = snr_begin:4:snr_end
     else
         save_snr = fopen(savePath_txt+"/save_snr.txt",'a');
         save_Mse = fopen(savePath_txt+"/save_Mse.txt",'a');
-    end
+    end 
     fprintf(save_snr,'%d \r\n',snr);
     fprintf(save_Mse,'%.6g \r\n',Mse);
     fclose(save_snr);
     fclose(save_Mse);
-    fprintf(' snr = %d , acc = %f , mse = %.6g \r\n',snr,Acc,Mse);
+    fprintf(' snr = %d , mse = %.6g \r\n',snr,Mse);
     clearvars -except snr save_path snr_begin snr_end
 end
