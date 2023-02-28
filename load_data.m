@@ -43,7 +43,7 @@ for name_order = 1:data_num
 end
 x = gather(x);
 y = gather(y);
-clear x_mat y_mat x_names y_names
+clear x_mat y_mat fin_mat x_names y_names fin_names
 
 % pilot_length = 2047;
 % zero_length = 3000;

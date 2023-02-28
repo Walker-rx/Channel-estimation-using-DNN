@@ -3,31 +3,39 @@ close all
 
 save_path = "data_save/light_data";
 % save_path = "data_save/2.23";
+
+%% Network parameters
 snr_begin = -6;
 snr_end = 42;
+h_order = 30;
+inputSize = h_order;
+numHiddenUnits = 25;
+outputSize = 6;  % y=h*x+n;  y:(outputSize,m) h:(outputSize,inputSize) x:(inputSize,m)
+maxEpochs = 2000;
+miniBatchSize = 40;
+LearnRateDropPeriod = 15;
+LearnRateDropFactor = 0.1;
 inilearningRate = 1e-2;
+
+%%
 snr = 34;
-fprintf("This is twononlinear network , ini learningRate = %e ,v3 \n",inilearningRate);
+cal_nmse = @(hat,exp)10*log10(sum(sum((hat-exp).^2))/sum(sum(exp.^2)));
+fprintf("This is twononlinear network , ini learningRate = %e , DropPeriod = %d , DropFactor = %f  v3 \n",...
+        inilearningRate,LearnRateDropPeriod,LearnRateDropFactor);
 % for snr = snr_begin:4:snr_end
-    clearvars -except snr save_path snr_begin snr_end inilearningRate
+    clearvars -except snr save_path snr_begin snr_end inilearningRate inputSize ...
+                      numHiddenUnits outputSize maxEpochs miniBatchSize ...
+                      LearnRateDropPeriod LearnRateDropFactor cal_nmse
 %     fprintf("snr = %d begin \n",snr);
     amp = -1;
     amp2 = 33;
     amp3 = 41;
 
+%% Load data
     load_path = save_path + "/25M/8pam/amp"+amp+"/mat";
 %     load_path = save_path + "/data/snr"+snr;
     fprintf("amp=%d \n",amp);
     load_data
-
-%     x = cellfun(@(cell1)(cell1*100*1.1^amp),x,'UniformOutput',false);
-
-%     totalNum = data_num;
-%     trainNum = floor(totalNum*0.8);
-%     xTrain = x(1:trainNum);
-%     yTrain = y(1:trainNum);
-%     xTest = x(trainNum+1:end);
-%     yTest = y(trainNum+1:end);
 
     totalNum = data_num*10;
     trainNum = floor(totalNum*0.8);
@@ -50,6 +58,7 @@ fprintf("This is twononlinear network , ini learningRate = %e ,v3 \n",inilearnin
     yTest2 = y(trainNum+1:end);
     xTrain2 = cellfun(@(cell1)(cell1*100*1.1^amp2),xTrain2,'UniformOutput',false);
     xTest2 = cellfun(@(cell1)(cell1*100*1.1^amp2),xTest2,'UniformOutput',false);
+    norm_factor = 1/norm(xTrain2{1})*sqrt(length(xTrain2{1}));
     clear x y    
  
     load_path = save_path + "/25M/8pam/amp"+amp3+"/mat";
@@ -65,56 +74,37 @@ fprintf("This is twononlinear network , ini learningRate = %e ,v3 \n",inilearnin
     xTest3 = cellfun(@(cell1)(cell1*100*1.1^amp3),xTest3,'UniformOutput',false);
     clear x y 
 
+%%  Normalize data
     xTrain = [xTrain1 xTrain2 xTrain3];
     yTrain = [yTrain1 yTrain2 yTrain3];
-    
-    h_order = 30;
-    inputSize = h_order;
-    numHiddenUnits = 25;
-    outputSize = 6;  % y=h*x+n;  y:(outputSize,m) h:(outputSize,inputSize) x:(inputSize,m)
-    maxEpochs = 2000;
-    miniBatchSize = 40;
-    LearnRateDropPeriod = 10;
-    LearnRateDropFactor = 0.1;
-    
+    xTrain = cellfun(@(cell1)(cell1*norm_factor),xTrain,'UniformOutput',false);
+    xTest1 = cellfun(@(cell1)(cell1*norm_factor),xTest1,'UniformOutput',false);
+    xTest2 = cellfun(@(cell1)(cell1*norm_factor),xTest2,'UniformOutput',false);
+    xTest3 = cellfun(@(cell1)(cell1*norm_factor),xTest3,'UniformOutput',false);
+  
+%%  Reshape data
     for i = 1:numel(xTrain)
-        xTrain{i} = toeplitz(xTrain{i}(h_order:-1:1),xTrain{i}(h_order:end));
-        xTrain{i} = xTrain{i}/32e4*sqrt(numel(xTrain{i}));
-%         xTrain_p2 = toeplitz([0,xTrain{i}(length(xTrain{i})...
-%                                           :-1:...
-%                                           length(xTrain{i})-(h_order-2)...
-%                                           ).'...
-%                              ],...
-%                              zeros(1,h_order-1));
-%         xTrain{i} = [xTrain_p1,xTrain_p2];
+        xTrain{i} = toeplitz(xTrain{i}(inputSize:-1:1),xTrain{i}(inputSize:end));
         yTrain{i} = reshape(yTrain{i}(1:6000),outputSize,1000);
         yTrain{i} = yTrain{i}(:,1:size(xTrain{i},2));
     end
     for i = 1:numel(xTest1)
-        xTest1{i} = toeplitz(xTest1{i}(h_order:-1:1),xTest1{i}(h_order:end));
-        xTest1{i} = xTest1{i}/32e4*sqrt(numel(xTest1{i}));
-%         xTest_p2 = toeplitz([0,xTest{i}(length(xTest{i})...
-%                                           :-1:...
-%                                           length(xTest{i})-(h_order-2)...
-%                                           ).'...
-%                              ],...
-%                              zeros(1,h_order-1));
-%         xTest{i} = [xTest_p1,xTest_p2];
+        xTest1{i} = toeplitz(xTest1{i}(inputSize:-1:1),xTest1{i}(inputSize:end));      
         yTest1{i} = reshape(yTest1{i}(1:6000),outputSize,1000);
         yTest1{i} = yTest1{i}(:,1:size(xTest1{i},2));
     end
     for i = 1:numel(xTest2)
-        xTest2{i} = toeplitz(xTest2{i}(h_order:-1:1),xTest2{i}(h_order:end));
-        xTest2{i} = xTest2{i}/32e4*sqrt(numel(xTest2{i}));
+        xTest2{i} = toeplitz(xTest2{i}(inputSize:-1:1),xTest2{i}(inputSize:end));
         yTest2{i} = reshape(yTest2{i}(1:6000),outputSize,1000);
         yTest2{i} = yTest2{i}(:,1:size(xTest2{i},2));
     end
     for i = 1:numel(xTest3)
-        xTest3{i} = toeplitz(xTest3{i}(h_order:-1:1),xTest3{i}(h_order:end));
-        xTest3{i} = xTest3{i}/32e4*sqrt(numel(xTest3{i}));
+        xTest3{i} = toeplitz(xTest3{i}(inputSize:-1:1),xTest3{i}(inputSize:end));
         yTest3{i} = reshape(yTest3{i}(1:6000),outputSize,1000);
         yTest3{i} = yTest3{i}(:,1:size(xTest3{i},2));
     end
+
+%% Initialize network
     validationFrequency = floor(size(xTrain{1},2)/miniBatchSize);
 
     layers = [...
@@ -141,55 +131,56 @@ fprintf("This is twononlinear network , ini learningRate = %e ,v3 \n",inilearnin
         'InitialLearnRate',inilearningRate);
 %         'Plots','training-progress');
     % 'ExecutionEnvironment','gpu',...
-%     pause(60)
-looptime = 10;
-mmse1 = zeros(1,looptime);
-mmse2 = zeros(1,looptime);
-mmse3 = zeros(1,looptime);
-for k = 1:looptime    
-    net = trainNetwork(xTrain,yTrain,layers,options);
-    h = net.Layers(2).Weights.';
-    y_hat1 = predict(net,xTest1,...
-        'MiniBatchSize',miniBatchSize);
-    y_hatT1 = y_hat1.';
 
-    y_hat2 = predict(net,xTest2,...
-        'MiniBatchSize',miniBatchSize);
-    y_hatT2 = y_hat2.';
-
-    y_hat3 = predict(net,xTest3,...
-        'MiniBatchSize',miniBatchSize);
-    y_hatT3 = y_hat3.';
-
-    mseNum1 = cellfun(@(cell1,cell2)mse(cell1,cell2),y_hatT1,yTest1);
-    Mse1 = mean(mseNum1);
-    mmse1(k) = Mse1;
-
-    mseNum2 = cellfun(@(cell1,cell2)mse(cell1,cell2),y_hatT2,yTest2);
-    Mse2 = mean(mseNum2);
-    mmse2(k) = Mse2;
-
-    mseNum3 = cellfun(@(cell1,cell2)mse(cell1,cell2),y_hatT3,yTest3);
-    Mse3 = mean(mseNum3);
-    mmse3(k) = Mse3;
-    fprintf("%d times , amp mse = %e , amp2 mse = %e , amp3 mse = %e \n",k,Mse1,Mse2,Mse3);
-end
-    Mmse1 = mean(mmse1);
-    Mmse2 = mean(mmse2);
-    Mmse3 = mean(mmse3);
+%% Train network
+    looptime = 10;
+    nmse1_mat = zeros(1,looptime);
+    nmse2_mat = zeros(1,looptime);
+    nmse3_mat = zeros(1,looptime);
+    for k = 1:looptime    
+        net = trainNetwork(xTrain,yTrain,layers,options);
+        h = net.Layers(2).Weights.';
+        y_hat1 = predict(net,xTest1,...
+            'MiniBatchSize',miniBatchSize);
+        y_hatT1 = y_hat1.';
+    
+        y_hat2 = predict(net,xTest2,...
+            'MiniBatchSize',miniBatchSize);
+        y_hatT2 = y_hat2.';
+    
+        y_hat3 = predict(net,xTest3,...
+            'MiniBatchSize',miniBatchSize);
+        y_hatT3 = y_hat3.';
+    
+        nmseNum1 = cellfun(@(hat,exp)10*log10(sum(sum((hat-exp).^2))/sum(sum(exp.^2))),y_hatT1,yTest1);
+        nmse1 = mean(nmseNum1);
+        nmse1_mat(k) = nmse1;
+    
+        nmseNum2 = cellfun(@(hat,exp)10*log10(sum(sum((hat-exp).^2))/sum(sum(exp.^2))),y_hatT2,yTest2);
+        nmse2 = mean(nmseNum2);
+        nmse2_mat(k) = nmse2;
+    
+        nmseNum3 = cellfun(@(hat,exp)10*log10(sum(sum((hat-exp).^2))/sum(sum(exp.^2))),y_hatT3,yTest3);
+        nmse3 = mean(nmseNum3);
+        nmse3_mat(k) = nmse3;
+        fprintf("%d times , amp nmse = %f , amp2 nmse = %f , amp3 nmse = %f \n",k,nmse1,nmse2,nmse3);
+    end
+    nmse1_mean = mean(nmse1_mat);
+    nmse2_mean = mean(nmse2_mat);
+    nmse3_mean = mean(nmse3_mat);
        
     savePath_txt = save_path + "/result/2.28/25M/Twononlinear";    
     if(~exist(savePath_txt,'dir'))
         mkdir(char(savePath_txt));
     end
-    save_Mse = fopen(savePath_txt+"/save_Mse.txt",'a');
-    fprintf(save_Mse,"\n \n");
-    fprintf(save_Mse," twononlinear ,\r\n ini learningRate = %e ,\r\n DropPeriod = %d ,\r\n DropFactor = %f ,\r\n amp = %d , amp2 = %d , amp3 = %d ,\r\n amp mse = %e , amp2 mse = %e , amp3 mse = %e ",...
-                                          inilearningRate,LearnRateDropPeriod,LearnRateDropFactor,amp,amp2,amp3,Mmse1,Mmse2,Mmse3);
-    fclose(save_Mse);
+    save_Nmse = fopen(savePath_txt+"/save_Nmse.txt",'w');
+    fprintf(save_Nmse,"\n \n");
+    fprintf(save_Nmse," twononlinear ,\r\n ini learningRate = %e ,\r\n DropPeriod = %d ,\r\n DropFactor = %f ,\r\n amp = %d , amp2 = %d , ampd = %f ,\r\n amp nmse = %f , amp2 nmse = %f , amp3 nmse = %f ",...
+                                          inilearningRate,LearnRateDropPeriod,LearnRateDropFactor,amp,amp2,amp3,nmse1_mean,nmse2_mean,nmse3_mean);
+    fclose(save_Nmse);
 
     fprintf(" \n twononlinear, ini learningRate = %e ,DropPeriod = %d , DropFactor = %f \n",inilearningRate,LearnRateDropPeriod,LearnRateDropFactor);
-    fprintf(" amp mse = %e , amp2 mse = %e , amp3 mse = %e \n",Mmse1,Mmse2,Mmse3);
+    fprintf(" amp nmse = %f , amp2 nmse = %f , amp3 nmse = %f \n",nmse1_mean,nmse2_mean,nmse3_mean);
 
 %     savePath_mat = save_path + "/result/Twononlinear/snr" + snr;
 %     savePath_txt = save_path + "/result/Twononlinear";
