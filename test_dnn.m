@@ -1,37 +1,51 @@
 clear 
 close all
 
-save_path = "data_save/2.20";
+save_path = "data_save/2.26";
 snr_begin = 2;
 snr_end = 50;
 % snr = 2;
 fprintf("This is linear network \n");
-for snr = snr_begin:4:snr_end
+for snr = 50:4:snr_end
     clearvars -except snr save_path snr_begin snr_end
     fprintf("snr = %d begin \n",snr);
     load_path = save_path + "/data/snr"+snr;
     load_data
 
     totalNum = data_num;
-    trainNum = floor(totalNum/2);
-    xTrain = x(1:trainNum);
-    yTrain = y(1:trainNum);
-    xTest = x(trainNum+1:end);
-    yTest = y(trainNum+1:end);
+    trainNum = floor(totalNum*0.8);
 
-    h_order = length(yTrain{1}) - length(xTrain{1}) + 1;
+    amp = 33;
+    x = cellfun(@(cell1)(cell1*100*1.1^amp),x,'UniformOutput',false);
+
+    xTrain = x(1:trainNum).';
+    yTrain = y(1:trainNum).';
+    xTest = x(trainNum+1:end).';
+    yTest = y(trainNum+1:end).';
+
+    h_order = 20;
     inputSize = h_order;
     numHiddenUnits = 5;
     outputSize = 1;  % y=h*x+n;  y:(outputSize,m) h:(outputSize,inputSize) x:(inputSize,m)
-    maxEpochs = 200;
+    maxEpochs = 20000;
     miniBatchSize = 20;
+    inilearningRate = 1e-4;
+    fprintf("This is linear network , ini learningRate = %e ,v1 \n",inilearningRate);
 
     for i = 1:numel(xTrain)
+        xTrain{i} = [zeros(1,10) xTrain{i}.'];
         xTrain{i} = toeplitz(xTrain{i}(h_order:-1:1),xTrain{i}(h_order:end));
-        xTest{i} = toeplitz(xTest{i}(h_order:-1:1),xTest{i}(h_order:end));
-        yTrain{i} = yTrain{i}(h_order:length(yTrain{i})-(h_order-1)).';
-        yTest{i} = yTest{i}(h_order:length(yTest{i})-(h_order-1)).';
+        yTrain{i} = yTrain{i}.';
+        yTrain{i} = yTrain{i}(:,1:size(xTrain{i},2));
     end
+
+    for i = 1:numel(xTest)
+        xTest{i} = [zeros(1,10) xTest{i}.'];
+        xTest{i} = toeplitz(xTest{i}(h_order:-1:1),xTest{i}(h_order:end));
+        yTest{i} = yTest{i}.';
+        yTest{i} = yTest{i}(:,1:size(xTest{i},2));
+    end
+
     validationFrequency = floor(size(xTrain{1},2)/miniBatchSize);
 
     layers = [...
@@ -47,23 +61,32 @@ for snr = snr_begin:4:snr_end
         'SequenceLength','longest', ...
         'Shuffle','every-epoch', ...
         'LearnRateSchedule','piecewise',...
-        'LearnRateDropFactor',0.9,...
-        'LearnRateDropPeriod',20,...
+        'LearnRateDropFactor',0.1,...
+        'LearnRateDropPeriod',60,...
         'ValidationData',{xTest,yTest},...
         'ValidationFrequency',validationFrequency,...
-        'ValidationPatience',5,...
-        'Verbose',true);
+        'ValidationPatience',500,...
+        'Verbose',true,...
+        'InitialLearnRate',inilearningRate);
 %         'Plots','training-progress');
     % 'ExecutionEnvironment','gpu',...
 %     pause(60)
-    net = trainNetwork(xTrain,yTrain,layers,options);
 
-    y_hat = predict(net,xTest,...
-        'MiniBatchSize',miniBatchSize);
-    y_hatT = y_hat.';
-
-    mseNum = cellfun(@(cell1,cell2)mse(cell1,cell2),y_hatT,yTest);
-    Mse = mean(mseNum);
+    looptime = 10;
+    mmse = zeros(1,looptime);
+    for k = 1:looptime    
+        net = trainNetwork(xTrain,yTrain,layers,options);
+        h = net.Layers(2).Weights.';
+        y_hat = predict(net,xTest,...
+            'MiniBatchSize',miniBatchSize);
+        y_hatT = y_hat.';    
+        mseNum = cellfun(@(cell1,cell2)mse(cell1,cell2),y_hatT,yTest);
+        Mse = mean(mseNum);
+        mmse(k) = Mse;
+        fprintf("%d times , mse = %e \n",k,Mse);
+    end
+    Mmse = mean(mmse);
+    fprintf("amp = %d , linear, ini learningRate = %e ,mse = %e \n",amp,inilearningRate,Mmse);
 
     savePath_mat = save_path + "/result/linear/snr" + snr;
     savePath_txt = save_path + "/result/linear";
@@ -87,12 +110,13 @@ for snr = snr_begin:4:snr_end
             disp(progress);
         end
     end
-    save_equalNum = 'saveEqualNum';
-    save_mseNum = 'saveMseNum';
-    eval([save_equalNum,'=equalNum;']);
-    eval([save_mseNum,'=mseNum;']);
-    save(savePath_mat+"/save_equalNum.mat",save_equalNum);
+    
+    save_mseNum = 'saveMseNum';    
+    save_h = 'saveH'; 
+    eval([save_mseNum,'=mseNum;']);    
+    eval([save_h,'=h;']); 
     save(savePath_mat+"/save_mseNum.mat",save_mseNum);
+    save(savePath_mat+"/save_h.mat",save_h);
 
     if snr == snr_begin
         save_snr = fopen(savePath_txt+"/save_snr.txt",'w');
@@ -102,9 +126,9 @@ for snr = snr_begin:4:snr_end
         save_Mse = fopen(savePath_txt+"/save_Mse.txt",'a');
     end
     fprintf(save_snr,'%d \r\n',snr);
-    fprintf(save_Mse,'%.6g \r\n',Mse);
+    fprintf(save_Mse,'%.6g \r\n',Mmse);
     fclose(save_snr);
     fclose(save_Mse);
-    fprintf(' snr = %d , acc = %f , mse = %.6g \r\n',snr,Acc,Mse);
+    fprintf(' snr = %d , mse = %.6g \r\n',snr,Mmse);
     clearvars -except snr save_path snr_begin snr_end
 end

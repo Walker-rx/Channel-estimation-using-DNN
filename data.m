@@ -32,7 +32,8 @@ save(save_path_h+"/save_h.mat",saveH);
 %%
 % ls_esi
 %%
-for snr = 2:4:50
+snr_begin = 2;
+for snr = snr_begin:4:50
     save_path = save_path_tmp + "/data/snr"+snr;
     if(~exist(save_path,'dir'))
         mkdir(char(save_path));
