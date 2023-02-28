@@ -2,14 +2,13 @@ clear
 close all
 
 save_path = "data_save/2.26";
-snr_begin = -6;
-snr_end = 42;
+amp_begin = -4;
+amp_end = 50;
 train_order = 1;
 test_order = 9;
-% snr = 2;
 fprintf("v1 \n");
-for snr = 50:4:50
-    amp = 33;
+for amp = amp_begin:2:amp_end
+
 %     load_path = save_path + "/25M/8pam/amp"+amp+"/mat";
 %     fprintf("amp = %d \n",amp);
 %     pilot_length = 2047;
@@ -103,7 +102,7 @@ for snr = 50:4:50
     eval([saveH,'=h;']);
     save(savePath_result+"/save_h.mat",saveH);
 
-    if snr == snr_begin
+    if snr == amp_begin
         save_snr = fopen(save_path+"/result/ls/save_snr.txt",'w');
         save_Mse = fopen(save_path+"/result/ls/save_Mse.txt",'w');
     else

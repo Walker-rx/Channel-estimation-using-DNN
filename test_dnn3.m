@@ -28,7 +28,8 @@ fprintf("This is twononlinear network , ini learningRate = %e , DropPeriod = %d 
 test_num = 0;
 amp_begin = -4;
 amp_end = 50;
-for amp = amp_begin:2:amp_end
+amp_step = 2;
+for amp = amp_begin: amp_step :amp_end
     test_num = test_num + 1;
     load_path = save_path + "/25M/8pam/amp"+amp+"/mat";
     fprintf("load amp=%d \n",amp);
@@ -199,7 +200,7 @@ end
 save_Nmse = fopen(savePath_txt+"/save_Nmse.txt",'w');
 fprintf(save_Nmse,"\n \n");
 fprintf(save_Nmse," twononlinear ,\r\n ini learningRate = %e ,\r\n DropPeriod = %d ,\r\n DropFactor = %f ,\r\n amp begin = %d , amp end = %d , amp step = %d  ",...
-                                      inilearningRate, LearnRateDropPeriod, LearnRateDropFactor, amp_begin, amp_end, 2);
+                                      inilearningRate, LearnRateDropPeriod, LearnRateDropFactor, amp_begin, amp_end, amp_step);
 fclose(save_Nmse);
 
 for i = 1:test_num
