@@ -1,7 +1,8 @@
-clear 
-close all
+clear
+% close all
 
-save_path = "data_save/light_data";
+t = datetime('now');
+save_path = "data_save/light_data_2.28";
 % save_path = "data_save/2.23";
 
 %% Network parameters
@@ -10,14 +11,14 @@ inputSize = h_order;
 numHiddenUnits = 25;
 outputSize = 6;  % y=h*x+n;  y:(outputSize,m) h:(outputSize,inputSize) x:(inputSize,m)
 maxEpochs = 2000;
-miniBatchSize = 40;
-LearnRateDropPeriod = 15;
+miniBatchSize = 400;
+LearnRateDropPeriod = 5;
 LearnRateDropFactor = 0.1;
 inilearningRate = 1e-2;
 
 %%
-fprintf("This is twononlinear network , ini learningRate = %e , DropPeriod = %d , DropFactor = %f  v3 \n",...
-    inilearningRate,LearnRateDropPeriod,LearnRateDropFactor);
+fprintf("This is twononlinear network , ini learningRate = %e , min batch size = %d , DropPeriod = %d , DropFactor = %f  v3 \n",...
+    inilearningRate,miniBatchSize,LearnRateDropPeriod,LearnRateDropFactor);
 
 % cal_nmse = @(hat,exp)10*log10(sum(sum((hat-exp).^2))/sum(sum(exp.^2)));
 % clearvars -except snr save_path snr_begin snr_end inilearningRate inputSize ...
@@ -31,7 +32,7 @@ amp_end = 50;
 amp_step = 2;
 for amp = amp_begin: amp_step :amp_end
     test_num = test_num + 1;
-    load_path = save_path + "/25M/8pam/amp"+amp+"/mat";
+    load_path = save_path + "/data/25M/8pam/amp"+amp+"/mat";
     fprintf("load amp=%d \n",amp);
     load_data
     totalNum = data_num*10;
@@ -105,7 +106,16 @@ end
 %     clear x y 
 
 %%  Normalize data
+totaltrain = numel(xTrain);
+% norm_cell = xTrain{floor(totaltrain/2)};
+% norm_factor = 1/norm(norm_cell)*sqrt(length(norm_cell));
+load_path = save_path + "/result/3.1/25M/8pam/mix_amp/Twononlinear";
+norm_mat = load(load_path+"/save_norm.mat");
+norm_names = fieldnames(norm_mat);
+norm_factor = gather(eval(strcat('norm_mat.',norm_names{1})));
+
 xTrain = cellfun(@(cell1)(cell1*norm_factor),xTrain,'UniformOutput',false);
+
 for i = 1:test_num
     xTest_nor = eval(['xTest',num2str(i)]);
     xTest_nor = cellfun(@(cell1)(cell1*norm_factor),xTest_nor,'UniformOutput',false);
@@ -153,7 +163,7 @@ options = trainingOptions('adam', ...
     'LearnRateSchedule','piecewise',...
     'LearnRateDropFactor',LearnRateDropFactor,...
     'LearnRateDropPeriod',LearnRateDropPeriod,...
-    'ValidationData',{xTest3,yTest3},...
+    'ValidationData',{xTest1,yTest1},...
     'ValidationFrequency',validationFrequency,...
     'ValidationPatience',30,...
     'Verbose',true,...
@@ -162,7 +172,7 @@ options = trainingOptions('adam', ...
 % 'ExecutionEnvironment','gpu',...
 
 %% Train network
-looptime = 10;
+looptime = 1;
 for i = 1:test_num
     eval([['nmse',num2str(i),'_mat'],'= zeros(1,looptime);']);
 end
@@ -189,30 +199,37 @@ for i = 1:test_num
 end
 
 %% Save data
-savePath_txt = save_path + "/result/2.28/25M/Twononlinear";   
-savePath_mat = save_path + "/result/2.28/25M/Twononlinear"; 
+savePath_txt = save_path + "/result/"+t.Month+"."+t.Day+"/25M/8pam/Twononlinear3";   
+savePath_mat = save_path + "/result/"+t.Month+"."+t.Day+"/25M/8pam/Twononlinear3"; 
 if(~exist(savePath_txt,'dir'))
     mkdir(char(savePath_txt));
 end
 if(~exist(savePath_mat,'dir'))
     mkdir(char(savePath_mat));
 end
-save_Nmse = fopen(savePath_txt+"/save_Nmse.txt",'w');
-fprintf(save_Nmse,"\n \n");
-fprintf(save_Nmse," twononlinear ,\r\n ini learningRate = %e ,\r\n DropPeriod = %d ,\r\n DropFactor = %f ,\r\n amp begin = %d , amp end = %d , amp step = %d  ",...
-                                      inilearningRate, LearnRateDropPeriod, LearnRateDropFactor, amp_begin, amp_end, amp_step);
-fclose(save_Nmse);
+save_parameter = fopen(savePath_txt+"/save_parameter.txt",'w');
+fprintf(save_parameter,"\n \n");
+fprintf(save_parameter," twononlinear ,\r\n ini learningRate = %e ,\r\n min batch size = %d , \r\n DropPeriod = %d ,\r\n DropFactor = %f ,\r\n amp begin = %d , amp end = %d , amp step = %d \r\n data_num = %d ",...
+                                      inilearningRate, miniBatchSize, LearnRateDropPeriod, LearnRateDropFactor, amp_begin, amp_end, amp_step, data_num);
+fclose(save_parameter);
 
+save_nmse_name = 'save_nmse';
+eval([save_nmse_name,'=nmse_mean;']);
+save(savePath_mat+"/save_Nmse.mat",save_nmse_name);
 for i = 1:test_num
-    index = 2*i - 6;
-    save_nmse_name = ['save_nmse_',num2str(index)];
-    eval([save_nmse_name,'=nmse_mean(i)';]);
+%     save_nmse_name = ['save_nmse_' num2str(i)];
+%     eval([save_nmse_name,'=nmse_mean(i);']);
     if i == 1
-        save(savePath_mat+"/save_Nmse.mat",save_nmse_name);
+        save_Nmse = fopen(savePath_txt+"/save_Nmse.txt",'w');
+%         save(savePath_mat+"/save_Nmse.mat",save_nmse_name);
     else
-        save(savePath_mat+"/save_Nmse.mat",save_nmse_name,'-append');
+        save_Nmse = fopen(savePath_txt+"/save_Nmse.txt",'a');
+%         save(savePath_mat+"/save_Nmse.mat",save_nmse_name,'-append');
     end
+    fprintf(save_Nmse,"%f \n" , nmse_mean(i));
+    fclose(save_Nmse);
 end
 
-fprintf(" \n twononlinear, ini learningRate = %e ,DropPeriod = %d , DropFactor = %f \n",inilearningRate, LearnRateDropPeriod, LearnRateDropFactor);
+fprintf(" \n twononlinear, ini learningRate = %e , min batch size = %d , DropPeriod = %d , DropFactor = %f , data_num = %d \n",...
+    inilearningRate, miniBatchSize, LearnRateDropPeriod, LearnRateDropFactor, data_num);
     

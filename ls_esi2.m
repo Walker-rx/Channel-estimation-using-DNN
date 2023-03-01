@@ -1,46 +1,25 @@
 clear 
 close all
 
-save_path = "data_save/2.26";
+t = datetime('now');
+save_path = "data_save/light_data_2.28";
 amp_begin = -4;
 amp_end = 50;
-train_order = 1;
-test_order = 9;
+looptime = 0;
 fprintf("v1 \n");
 for amp = amp_begin:2:amp_end
-
-%     load_path = save_path + "/25M/8pam/amp"+amp+"/mat";
-%     fprintf("amp = %d \n",amp);
-%     pilot_length = 2047;
-%     zero_length = 3000;
-%     x_mat = load(load_path+"/save_signal_ori.mat");
-%     y_mat = load(load_path+"/save_signal_received_real_send1.mat");
-%     fin_mat = load(load_path+"/save_fin_syn_point_real_send1.mat");
-%     x_names = fieldnames(x_mat);
-%     y_names = fieldnames(y_mat);
-%     fin_names = fieldnames(fin_mat);
-%     data_num = 200;
-%     
-%     x = cell(1,data_num*10);
-%     y = cell(1,data_num*10);
-%     for name_order = 1:data_num
-%         signal_ori = gather(eval(strcat('x_mat.',x_names{1})));
-%         signal_received = gather(eval(strcat('y_mat.',y_names{1})));
-%         fin_syn_point = gather(eval(strcat('fin_mat.',fin_names{1})));
-%         data_ori = signal_ori(pilot_length+zero_length+1:end);
-%         data_received = signal_received(fin_syn_point + (pilot_length+zero_length)*6 : end);
-%         for i = 1:10
-%             x{10*(name_order-1)+i} = [zeros(1,15),data_ori(1000*(i-1)+1:1000*i)];
-%             y{10*(name_order-1)+i} = data_received(6000*(i-1)+1:6000*i);
-%         end
-%     end
-%     x = gather(x);
-%     y = gather(y);
-%     clear x_mat y_mat x_names y_names
-    
-    load_path = save_path + "/data/snr"+snr;
+%% Load data
+    looptime = looptime + 1;
+    load_path = save_path + "/data/25M/8pam/amp"+amp+"/mat";
     load_data
+%% Normalize data
     x = cellfun(@(cell1)(cell1*100*1.1^amp),x,'UniformOutput',false);
+    load_path = save_path + "/result/3.1/25M/8pam/mix_amp/Twononlinear";
+    norm_mat = load(load_path+"/save_norm.mat");
+    norm_names = fieldnames(norm_mat);
+    norm_factor = gather(eval(strcat('norm_mat.',norm_names{1})));
+    x = cellfun(@(cell1)(cell1*norm_factor),x,'UniformOutput',false);
+%%
     xTrain = x(1);
     yTrain = y(1);
     xTest = x(2:end);
@@ -48,70 +27,68 @@ for amp = amp_begin:2:amp_end
 
     h_order = 30;
     h = zeros(30,6);
-
-    xTrain{1} = [zeros(1,10) xTrain{1}.'];
+%% Reshape data
+%     xTrain{1} = [zeros(1,10) xTrain{1}.'];
     xTrain{1} = toeplitz(xTrain{1}(h_order:-1:1),xTrain{1}(h_order:end)).';
-%     for i = 1:6
-%         yTrain2 = yTrain{1}(i:6:i+6*(size(xTrain{1},1)-1));
-%         h_hat = (xTrain{1}'*xTrain{1})\xTrain{1}'*yTrain2.';
-%         h(:,i) = h_hat;
-%     end
-%     yTrain{1} = yTrain{1}.';
-    yTrain{1} = yTrain{1}(1:size(xTrain{1},1));
-    yTrain2 = yTrain{1};
-    h_hat = (xTrain{1}'*xTrain{1})\xTrain{1}'*yTrain2;
-
-    Mse = zeros(1,numel(xTest));
-    for j = 1:numel(xTest)
-        xTest{j} = [zeros(1,10) xTest{j}.'];
-        xTest{j} = toeplitz(xTest{j}(h_order:-1:1),xTest{j}(h_order:end)).';      
-        xTest2 = xTest{j};       
-        yTest{j} = yTest{j}(1:size(xTest{j},1));
-        yTest2 = yTest{j};
-        y_hat = xTest2*h_hat;
-
-        Msei = mse(y_hat,yTest2);
-        Mse(1,j) = Msei;
+    for i = 1:6
+        yTrain2 = yTrain{1}(i:6:i+6*(size(xTrain{1},1)-1));
+        h_hat = (xTrain{1}'*xTrain{1})\xTrain{1}'*yTrain2.';
+        h(:,i) = h_hat;
     end
-    mmse = mean(Mse);
-    fprintf("%e \n",mmse);
-
-%     Mse = zeros(numel(xTest),6);
+    
+%% LS for same sampling rate
+%     yTrain{1} = yTrain{1}.';
+%     yTrain{1} = yTrain{1}(1:size(xTrain{1},1));
+%     yTrain2 = yTrain{1};
+%     h_hat = (xTrain{1}'*xTrain{1})\xTrain{1}'*yTrain2;
+%     Mse = zeros(1,numel(xTest));
 %     for j = 1:numel(xTest)
 %         xTest{j} = [zeros(1,10) xTest{j}.'];
 %         xTest{j} = toeplitz(xTest{j}(h_order:-1:1),xTest{j}(h_order:end)).';      
-%         xTest2 = xTest{j};
-%         for k = 1:6
-% %             k = 6;
-%             yTest2 = yTest{j}(k:6:k+6*(length(xTest2)-1));
-%             y_hat = xTest2*h(:,k);
-%             Msei = mse(y_hat,yTest2.');
-%             Mse(j,k) = Msei;
-%         end
+%         xTest2 = xTest{j};       
+%         yTest{j} = yTest{j}(1:size(xTest{j},1));
+%         yTest2 = yTest{j};
+%         y_hat = xTest2*h_hat;
+% 
+%         Msei = mse(y_hat,yTest2);
+%         Mse(1,j) = Msei;
 %     end
-%     mmse = mean(mean(Mse));
+%     mmse = mean(Mse);
 %     fprintf("%e \n",mmse);
 
+%% LS for different sampling rate
+    Nmse_mat = zeros(numel(xTest),6);
+    for j = 1:numel(xTest)
+%         xTest{j} = [zeros(1,10) xTest{j}.'];
+        xTest{j} = toeplitz(xTest{j}(h_order:-1:1),xTest{j}(h_order:end)).';      
+        xTest2 = xTest{j};
+        for k = 1:6
+            yTest2 = yTest{j}(k:6:k+6*(length(xTest2)-1));
+            y_hat = xTest2*h(:,k);
+            y_hat = y_hat.';
+%             Msei = mse(y_hat,yTest2.');
+            Nmsei = 10*log10(sum((y_hat-yTest2).^2)/sum(yTest2.^2));
+            Nmse_mat(j,k) = Nmsei;
+        end
+    end
+    Nmse = mean(mean(Nmse_mat));
 
-    savePath_result = save_path + "/result/ls/snr" + snr;
+%%  Save data
+    savePath_result = save_path + "/result/"+t.Month+"."+t.Day+"/25M/8pam/norm_LS";
     if(~exist(savePath_result,'dir'))
         mkdir(char(savePath_result));
     end
     
-    saveH = 'save_h';
-    eval([saveH,'=h;']);
-    save(savePath_result+"/save_h.mat",saveH);
-
-    if snr == amp_begin
-        save_snr = fopen(save_path+"/result/ls/save_snr.txt",'w');
-        save_Mse = fopen(save_path+"/result/ls/save_Mse.txt",'w');
+    saveH = ['save_h_' num2str(looptime)];
+    eval([saveH,'=h;']);   
+    if amp == amp_begin
+        save_Nmse = fopen(savePath_result+"/save_Nmse.txt",'w');
+        save(savePath_result+"/save_h.mat",saveH);
     else
-        save_snr = fopen(save_path+"/result/ls/save_snr.txt",'a');
-        save_Mse = fopen(save_path+"/result/ls/save_Mse.txt",'a');
+        save_Nmse = fopen(savePath_result+"/save_Nmse.txt",'a');
+        save(savePath_result+"/save_h.mat",saveH,'-append');
     end  
-    fprintf(save_snr,'%d \r\n',snr);
-    fprintf(save_Mse,'%.6g \r\n',mmse);
-    fclose(save_snr);
-    fclose(save_Mse);
-    fprintf(' snr = %d , mse = %.6g \r\n',snr,mmse);
+    fprintf(save_Nmse,'%f \r\n',Nmse);
+    fclose(save_Nmse);
+    fprintf(' amp = %d , nmse = %.6g \r\n',amp,Nmse);
 end
