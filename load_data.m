@@ -24,7 +24,7 @@ fin_mat = load(load_path+"/save_fin_syn_point_real_send1.mat");
 x_names = fieldnames(x_mat);
 y_names = fieldnames(y_mat);
 fin_names = fieldnames(fin_mat);
-data_num = numel(x_names);
+data_num = 100;
 
 x = cell(1,data_num*10);
 y = cell(1,data_num*10);

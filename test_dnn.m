@@ -1,14 +1,14 @@
 clear
-% close all
+close all
 
 t = datetime('now');
-save_path = "data_save/light_data_2.28";
+save_path = "data_save/light_data_3.4";
 % save_path = "data_save/2.23";
 
 %% Network parameters
 h_order = 30;
 inputSize = h_order;
-numHiddenUnits = 25;
+numHiddenUnits = 40;
 outputSize = 6;  % y=h*x+n;  y:(outputSize,m) h:(outputSize,inputSize) x:(inputSize,m)
 maxEpochs = 2000;
 miniBatchSize = 200;
@@ -17,7 +17,7 @@ LearnRateDropFactor = 0.1;
 inilearningRate = 1e-2;
 
 %%
-fprintf("This is twononlinear network , single amp , ini learningRate = %e , min batch size = %d , DropPeriod = %d , DropFactor = %f  v1 \n",...
+fprintf("This is Threenonlinear network , single amp , ini learningRate = %e , min batch size = %d , DropPeriod = %d , DropFactor = %f  v3 \n",...
     inilearningRate,miniBatchSize,LearnRateDropPeriod,LearnRateDropFactor);
 
 % cal_nmse = @(hat,exp)10*log10(sum(sum((hat-exp).^2))/sum(sum(exp.^2)));
@@ -26,14 +26,14 @@ fprintf("This is twononlinear network , single amp , ini learningRate = %e , min
 %                   LearnRateDropPeriod LearnRateDropFactor cal_nmse
 test_num = 0;
 amp_begin = -4;
-amp_end = 50;
+amp_end = 46;
 amp_step = 2;
 amp_num = (amp_end - amp_begin)/amp_step + 1 ;
 nmse_all = zeros(1,amp_num);
-for amp = amp_begin: amp_step :amp_end
-    %% Load data
+for amp = 26: amp_step :amp_end
+%%  Load data
     test_num = test_num + 1;
-    load_path = save_path + "/data/25M/8pam/amp"+amp+"/mat";
+    load_path = save_path + "/data/25M/rand/amp"+amp+"/mat";
     fprintf("load amp=%d \n",amp);
     load_data
     totalNum = data_num*10;
@@ -57,7 +57,7 @@ for amp = amp_begin: amp_step :amp_end
     totaltrain = numel(xTrain);
     % norm_cell = xTrain{floor(totaltrain/2)};
     % norm_factor = 1/norm(norm_cell)*sqrt(length(norm_cell));
-    load_path = save_path + "/result/3.1/25M/8pam/mix_amp/Twononlinear";
+    load_path = "data_save/light_data_2.28/result/3.1/25M/8pam/mix_amp/Twononlinear";
     norm_mat = load(load_path+"/save_norm.mat");
     norm_names = fieldnames(norm_mat);
     norm_factor = gather(eval(strcat('norm_mat.',norm_names{1})));
@@ -106,7 +106,7 @@ for amp = amp_begin: amp_step :amp_end
     % 'ExecutionEnvironment','gpu',...
 
 %% Train network
-    looptime = 5;
+    looptime = 3;
     nmse_mat = zeros(1,looptime);
     
     for i = 1:looptime
@@ -122,13 +122,13 @@ for amp = amp_begin: amp_step :amp_end
         nmse_loop = mean(nmseNum);
         nmse_mat(i) = nmse_loop;
     
-        fprintf("already training %d times \n",i);
+        fprintf("amp = %d , already training %d times \n",amp,i);
     end
     nmse_mean = mean(nmse_mat);
     nmse_all(test_num) = nmse_mean;
 %% Save data
-    savePath_txt = save_path + "/result/"+t.Month+"."+t.Day+"/25M/8pam/single_amp/Twononlinear";
-    savePath_mat = save_path + "/result/"+t.Month+"."+t.Day+"/25M/8pam/single_amp/Twononlinear";
+    savePath_txt = save_path + "/result/"+t.Month+"."+t.Day+"/25M/rand/single_amp/Threenonlinear";
+    savePath_mat = save_path + "/result/"+t.Month+"."+t.Day+"/25M/rand/single_amp/Threenonlinear";
     if(~exist(savePath_txt,'dir'))
         mkdir(char(savePath_txt));
     end
@@ -138,8 +138,10 @@ for amp = amp_begin: amp_step :amp_end
     if amp == amp_begin
         save_parameter = fopen(savePath_txt+"/save_parameter.txt",'w');
         fprintf(save_parameter,"\n \n");
-        fprintf(save_parameter," twononlinear ,\r\n ini learningRate = %e ,\r\n min batch size = %d , \r\n DropPeriod = %d ,\r\n DropFactor = %f ,\r\n amp begin = %d , amp end = %d , amp step = %d \r\n data_num = %d ",...
+        fprintf(save_parameter," Threenonlinear ,\r\n ini learningRate = %e ,\r\n min batch size = %d , \r\n DropPeriod = %d ,\r\n DropFactor = %f ,\r\n amp begin = %d , amp end = %d , amp step = %d \r\n data_num = %d \r\n",...
             inilearningRate, miniBatchSize, LearnRateDropPeriod, LearnRateDropFactor, amp_begin, amp_end, amp_step, data_num);
+        fprintf(save_parameter," validationFrequency has changed from floor(size(xTrain{1},2)/100 to floor(numel(xTrain)/miniBatchSize/5) (9 to 6)");
+        fprintf(save_parameter,"\n Hidden Units = %d",numHiddenUnits);
         fclose(save_parameter);
     end
     if amp == amp_end
@@ -154,8 +156,8 @@ for amp = amp_begin: amp_step :amp_end
     end
     fprintf(save_Nmse,"%f \n" , nmse_mean);
     fclose(save_Nmse);
-    fprintf("amp %d training end",amp);
+    fprintf("amp %d training end \n",amp);
 end
-fprintf(" \n twononlinear, ini learningRate = %e , min batch size = %d , DropPeriod = %d , DropFactor = %f , data_num = %d \n",...
+fprintf(" \n Threenonlinear, ini learningRate = %e , min batch size = %d , DropPeriod = %d , DropFactor = %f , data_num = %d \n",...
     inilearningRate, miniBatchSize, LearnRateDropPeriod, LearnRateDropFactor, data_num);
     

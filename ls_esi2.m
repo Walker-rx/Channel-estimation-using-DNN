@@ -2,19 +2,19 @@ clear
 close all
 
 t = datetime('now');
-save_path = "data_save/light_data_2.28";
+save_path = "data_save/light_data_3.4";
 amp_begin = -4;
-amp_end = 50;
+amp_end = 60;
 looptime = 0;
 fprintf("v1 \n");
 for amp = amp_begin:2:amp_end
 %% Load data
     looptime = looptime + 1;
-    load_path = save_path + "/data/25M/8pam/amp"+amp+"/mat";
+    load_path = save_path + "/data/25M/rand/amp"+amp+"/mat";
     load_data
 %% Normalize data
     x = cellfun(@(cell1)(cell1*100*1.1^amp),x,'UniformOutput',false);
-    load_path = save_path + "/result/3.1/25M/8pam/mix_amp/Twononlinear";
+    load_path = "data_save/light_data_2.28/result/3.1/25M/8pam/mix_amp/Twononlinear";
     norm_mat = load(load_path+"/save_norm.mat");
     norm_names = fieldnames(norm_mat);
     norm_factor = gather(eval(strcat('norm_mat.',norm_names{1})));
@@ -74,7 +74,7 @@ for amp = amp_begin:2:amp_end
     Nmse = mean(mean(Nmse_mat));
 
 %%  Save data
-    savePath_result = save_path + "/result/"+t.Month+"."+t.Day+"/25M/8pam/norm_LS";
+    savePath_result = save_path + "/result/"+t.Month+"."+t.Day+"/25M/rand/norm_LS";
     if(~exist(savePath_result,'dir'))
         mkdir(char(savePath_result));
     end
