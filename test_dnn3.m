@@ -2,22 +2,22 @@ clear
 close all
 
 t = datetime('now');
-save_path = "data_save/light_data_2.28";
+save_path = "data_save/light_data_3.8";
 % save_path = "data_save/2.23";
 
 %% Network parameters
 h_order = 40;
 inputSize = h_order;
-numHiddenUnits = 80;
+numHiddenUnits = 25;
 outputSize = 6;  % y=h*x+n;  y:(outputSize,m) h:(outputSize,inputSize) x:(inputSize,m)
 maxEpochs = 2000;
 miniBatchSize = 400;
 LearnRateDropPeriod = 5;
 LearnRateDropFactor = 0.1;
 inilearningRate = 1e-2;
-ver = 10 ;
+ver = 1;
 %%
-fprintf("This is Fournonlinear network , ini learningRate = %e , min batch size = %d , DropPeriod = %d , DropFactor = %f \n",...
+fprintf("This is Twononlinear network , ini learningRate = %e , min batch size = %d , DropPeriod = %d , DropFactor = %f \n",...
     inilearningRate,miniBatchSize,LearnRateDropPeriod,LearnRateDropFactor);
 fprintf("Hidden Units = %d , v%d \n",numHiddenUnits,ver)
 % cal_nmse = @(hat,exp)10*log10(sum(sum((hat-exp).^2))/sum(sum(exp.^2)));
@@ -32,7 +32,7 @@ amp_end = 50;
 amp_step = 2;
 for amp = amp_begin: amp_step :amp_end
     test_num = test_num + 1;
-    load_path = save_path + "/data/25M/rand/amp"+amp+"/mat";
+    load_path = save_path + "/data/10M/rand_bias0.6/amp"+amp+"/mat";
     fprintf("load amp=%d \n",amp);
     load_data
     totalNum = data_num*10;
@@ -146,7 +146,7 @@ end
 %% Initialize network
 % validationFrequency = floor(size(xTrain{1},2)/miniBatchSize);
 % validationFrequency = floor(size(xTrain{1},2)/100);
-validationFrequency = floor(numel(xTrain)/miniBatchSize/5);
+validationFrequency = floor(numel(xTrain)/miniBatchSize/4);
 
 layers = [...
     sequenceInputLayer(inputSize)
@@ -154,10 +154,10 @@ layers = [...
     reluLayer % 1
     fullyConnectedLayer(numHiddenUnits)
     reluLayer % 2
-    fullyConnectedLayer(numHiddenUnits)
-    reluLayer % 3
-    fullyConnectedLayer(numHiddenUnits)
-    reluLayer % 4
+%     fullyConnectedLayer(numHiddenUnits)
+%     sigmoidLayer % 3
+%     fullyConnectedLayer(numHiddenUnits)
+%     reluLayer % 4
 %     fullyConnectedLayer(numHiddenUnits)
 %     reluLayer % 5
     fullyConnectedLayer(outputSize)
@@ -228,8 +228,8 @@ for i = 1:test_num
 end
 
 %% Save data
-savePath_txt = save_path + "/result/"+t.Month+"."+t.Day+"/25M/rand/mix_amp/Fournonlinear"+ver;   
-savePath_mat = save_path + "/result/"+t.Month+"."+t.Day+"/25M/rand/mix_amp/Fournonlinear"+ver; 
+savePath_txt = save_path + "/result/"+t.Month+"."+t.Day+"/10M/rand_bias0.6/mix_amp/Twononlinear"+ver;   
+savePath_mat = save_path + "/result/"+t.Month+"."+t.Day+"/10M/rand_bias0.6/mix_amp/Twononlinear"+ver; 
 if(~exist(savePath_txt,'dir'))
     mkdir(char(savePath_txt));
 end
@@ -238,9 +238,9 @@ if(~exist(savePath_mat,'dir'))
 end
 save_parameter = fopen(savePath_txt+"/save_parameter.txt",'w');
 fprintf(save_parameter,"\n \n");
-fprintf(save_parameter," Fournonlinear ,\r\n ini learningRate = %e ,\r\n min batch size = %d , \r\n DropPeriod = %d ,\r\n DropFactor = %f ,\r\n amp begin = %d , amp end = %d , amp step = %d \r\n data_num = %d \r\n",...
+fprintf(save_parameter," Twononlinear ,\r\n ini learningRate = %e ,\r\n min batch size = %d , \r\n DropPeriod = %d ,\r\n DropFactor = %f ,\r\n amp begin = %d , amp end = %d , amp step = %d \r\n data_num = %d \r\n",...
                                       inilearningRate, miniBatchSize, LearnRateDropPeriod, LearnRateDropFactor, amp_begin, amp_end, amp_step, data_num);
-fprintf(save_parameter," validationFrequency has changed from floor(size(xTrain{1},2)/100 to floor(numel(xTrain)/miniBatchSize/5) (9 to 6)");
+fprintf(save_parameter," validationFrequency is floor(numel(xTrain)/miniBatchSize/4)");
 fprintf(save_parameter,"\n Hidden Units = %d",numHiddenUnits);
 fclose(save_parameter);
 
@@ -268,6 +268,6 @@ for i = 1:test_num
     fclose(save_Nmse_valid);
 end
 
-fprintf(" \n Fournonlinear, ini learningRate = %e , min batch size = %d , DropPeriod = %d , DropFactor = %f , data_num = %d \n",...
+fprintf(" \n Twononlinear, ini learningRate = %e , min batch size = %d , DropPeriod = %d , DropFactor = %f , data_num = %d \n",...
     inilearningRate, miniBatchSize, LearnRateDropPeriod, LearnRateDropFactor, data_num);
     

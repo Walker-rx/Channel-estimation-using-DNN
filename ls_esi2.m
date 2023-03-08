@@ -2,15 +2,15 @@ clear
 close all
 
 t = datetime('now');
-save_path = "data_save/light_data_3.4";
+save_path = "data_save/light_data_3.8";
 amp_begin = -4;
-amp_end = 60;
+amp_end = 50;
 looptime = 0;
 fprintf("v1 \n");
 for amp = amp_begin:2:amp_end
 %% Load data
     looptime = looptime + 1;
-    load_path = save_path + "/data/25M/rand/amp"+amp+"/mat";
+    load_path = save_path + "/data/10M/rand_bias0.6/amp"+amp+"/mat";
     load_data
 %% Normalize data
     x = cellfun(@(cell1)(cell1*100*1.1^amp),x,'UniformOutput',false);
@@ -74,7 +74,7 @@ for amp = amp_begin:2:amp_end
     Nmse = mean(mean(Nmse_mat));
 
 %%  Save data
-    savePath_result = save_path + "/result/"+t.Month+"."+t.Day+"/25M/rand/norm_LS";
+    savePath_result = save_path + "/result/"+t.Month+"."+t.Day+"/10M/rand_bias0.6/norm_LS";
     if(~exist(savePath_result,'dir'))
         mkdir(char(savePath_result));
     end

@@ -2,7 +2,7 @@ clear
 close all
 
 t = datetime('now');
-save_path = "data_save/light_data_3.4";
+save_path = "data_save/light_data_3.8";
 % save_path = "data_save/2.23";
 
 %% Network parameters
@@ -17,7 +17,7 @@ LearnRateDropFactor = 0.1;
 inilearningRate = 1e-2;
 
 %%
-fprintf("This is Threenonlinear network , single amp , ini learningRate = %e , min batch size = %d , DropPeriod = %d , DropFactor = %f  v3 \n",...
+fprintf("This is Threenonlinear network , single amp , ini learningRate = %e , min batch size = %d , DropPeriod = %d , DropFactor = %f  v2 \n",...
     inilearningRate,miniBatchSize,LearnRateDropPeriod,LearnRateDropFactor);
 
 % cal_nmse = @(hat,exp)10*log10(sum(sum((hat-exp).^2))/sum(sum(exp.^2)));
@@ -26,14 +26,14 @@ fprintf("This is Threenonlinear network , single amp , ini learningRate = %e , m
 %                   LearnRateDropPeriod LearnRateDropFactor cal_nmse
 test_num = 0;
 amp_begin = -4;
-amp_end = 46;
+amp_end = 50;
 amp_step = 2;
 amp_num = (amp_end - amp_begin)/amp_step + 1 ;
 nmse_all = zeros(1,amp_num);
-for amp = 26: amp_step :amp_end
+for amp = amp_begin: amp_step :amp_end
 %%  Load data
     test_num = test_num + 1;
-    load_path = save_path + "/data/25M/rand/amp"+amp+"/mat";
+    load_path = save_path + "/data/10M/rand_bias0.6/amp"+amp+"/mat";
     fprintf("load amp=%d \n",amp);
     load_data
     totalNum = data_num*10;
@@ -83,9 +83,11 @@ for amp = 26: amp_step :amp_end
     layers = [...
         sequenceInputLayer(inputSize)
         fullyConnectedLayer(numHiddenUnits)
-        reluLayer
+        reluLayer % 1
         fullyConnectedLayer(numHiddenUnits)
-        reluLayer
+        reluLayer % 2
+        fullyConnectedLayer(numHiddenUnits)
+        reluLayer % 3
         fullyConnectedLayer(outputSize)
         regressionLayer];
     options = trainingOptions('adam', ...
@@ -127,8 +129,8 @@ for amp = 26: amp_step :amp_end
     nmse_mean = mean(nmse_mat);
     nmse_all(test_num) = nmse_mean;
 %% Save data
-    savePath_txt = save_path + "/result/"+t.Month+"."+t.Day+"/25M/rand/single_amp/Threenonlinear";
-    savePath_mat = save_path + "/result/"+t.Month+"."+t.Day+"/25M/rand/single_amp/Threenonlinear";
+    savePath_txt = save_path + "/result/"+t.Month+"."+t.Day+"/10M/rand_bias0.6/single_amp/Threenonlinear";
+    savePath_mat = save_path + "/result/"+t.Month+"."+t.Day+"/10M/rand_bias0.6/single_amp/Threenonlinear";
     if(~exist(savePath_txt,'dir'))
         mkdir(char(savePath_txt));
     end
@@ -140,7 +142,7 @@ for amp = 26: amp_step :amp_end
         fprintf(save_parameter,"\n \n");
         fprintf(save_parameter," Threenonlinear ,\r\n ini learningRate = %e ,\r\n min batch size = %d , \r\n DropPeriod = %d ,\r\n DropFactor = %f ,\r\n amp begin = %d , amp end = %d , amp step = %d \r\n data_num = %d \r\n",...
             inilearningRate, miniBatchSize, LearnRateDropPeriod, LearnRateDropFactor, amp_begin, amp_end, amp_step, data_num);
-        fprintf(save_parameter," validationFrequency has changed from floor(size(xTrain{1},2)/100 to floor(numel(xTrain)/miniBatchSize/5) (9 to 6)");
+        fprintf(save_parameter," validationFrequency is floor(size(xTrain{1},2)/miniBatchSize");
         fprintf(save_parameter,"\n Hidden Units = %d",numHiddenUnits);
         fclose(save_parameter);
     end
