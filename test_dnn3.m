@@ -2,11 +2,11 @@ clear
 close all
 
 t = datetime('now');
-save_path = "data_save/light_data_3.8";
+save_path = "data_save/light_data_3.9";
 % save_path = "data_save/2.23";
 
 %% Network parameters
-h_order = 40;
+h_order = 30;
 inputSize = h_order;
 numHiddenUnits = 25;
 outputSize = 6;  % y=h*x+n;  y:(outputSize,m) h:(outputSize,inputSize) x:(inputSize,m)
@@ -16,6 +16,7 @@ LearnRateDropPeriod = 5;
 LearnRateDropFactor = 0.1;
 inilearningRate = 1e-2;
 ver = 1;
+bias = 0.3;
 %%
 fprintf("This is Twononlinear network , ini learningRate = %e , min batch size = %d , DropPeriod = %d , DropFactor = %f \n",...
     inilearningRate,miniBatchSize,LearnRateDropPeriod,LearnRateDropFactor);
@@ -27,12 +28,20 @@ fprintf("Hidden Units = %d , v%d \n",numHiddenUnits,ver)
 
 %% Load data
 test_num = 0;
-amp_begin = -4;
-amp_end = 50;
-amp_step = 2;
+% if bias == 0.3
+%     amp_begin = -8;
+%     amp_end = 46;
+% else
+%     amp_begin = -4;
+%     amp_end = 50;
+% end
+% amp_step = 2;
+amp_begin = 1;
+amp_end = 26;
+amp_step = 1;
 for amp = amp_begin: amp_step :amp_end
     test_num = test_num + 1;
-    load_path = save_path + "/data/10M/rand_bias0.6/amp"+amp+"/mat";
+    load_path = save_path + "/data/10M/rand_bias"+bias+"/amp"+amp+"/mat";
     fprintf("load amp=%d \n",amp);
     load_data
     totalNum = data_num*10;
@@ -42,8 +51,11 @@ for amp = amp_begin: amp_step :amp_end
     xTest_tmp = x(trainNum+1:end);
     yTest_tmp = y(trainNum+1:end);
 
-    xTrain_tmp = cellfun(@(cell1)(cell1*100*1.1^amp),xTrain_tmp,'UniformOutput',false);
-    xTest_tmp = cellfun(@(cell1)(cell1*100*1.1^amp),xTest_tmp,'UniformOutput',false);
+%     xTrain_tmp = cellfun(@(cell1)(cell1*100*1.1^amp),xTrain_tmp,'UniformOutput',false);
+%     xTest_tmp = cellfun(@(cell1)(cell1*100*1.1^amp),xTest_tmp,'UniformOutput',false);
+
+    xTrain_tmp = cellfun(@(cell1)(cell1*32000*(0.0015+(amp-1)*0.03994)),xTrain_tmp,'UniformOutput',false);
+    xTest_tmp = cellfun(@(cell1)(cell1*32000*(0.0015+(amp-1)*0.03994)),xTest_tmp,'UniformOutput',false);
 
     xTest_name = ['xTest',num2str(test_num)];
     yTest_name = ['yTest',num2str(test_num)];
@@ -228,8 +240,8 @@ for i = 1:test_num
 end
 
 %% Save data
-savePath_txt = save_path + "/result/"+t.Month+"."+t.Day+"/10M/rand_bias0.6/mix_amp/Twononlinear"+ver;   
-savePath_mat = save_path + "/result/"+t.Month+"."+t.Day+"/10M/rand_bias0.6/mix_amp/Twononlinear"+ver; 
+savePath_txt = save_path + "/result/"+t.Month+"."+t.Day+"/10M/rand_bias"+bias+"/mix_amp/Twononlinear"+ver;   
+savePath_mat = save_path + "/result/"+t.Month+"."+t.Day+"/10M/rand_bias"+bias+"/mix_amp/Twononlinear"+ver; 
 if(~exist(savePath_txt,'dir'))
     mkdir(char(savePath_txt));
 end

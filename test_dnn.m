@@ -2,7 +2,7 @@ clear
 close all
 
 t = datetime('now');
-save_path = "data_save/light_data_3.8";
+save_path = "data_save/light_data_3.9";
 % save_path = "data_save/2.23";
 
 %% Network parameters
@@ -15,6 +15,7 @@ miniBatchSize = 200;
 LearnRateDropPeriod = 12;
 LearnRateDropFactor = 0.1;
 inilearningRate = 1e-2;
+bias = 0.3;
 
 %%
 fprintf("This is Threenonlinear network , single amp , ini learningRate = %e , min batch size = %d , DropPeriod = %d , DropFactor = %f  v2 \n",...
@@ -25,15 +26,15 @@ fprintf("This is Threenonlinear network , single amp , ini learningRate = %e , m
 %                   numHiddenUnits outputSize maxEpochs miniBatchSize ...
 %                   LearnRateDropPeriod LearnRateDropFactor cal_nmse
 test_num = 0;
-amp_begin = -4;
-amp_end = 50;
-amp_step = 2;
+amp_begin = 1;
+amp_end = 26;
+amp_step = 1;
 amp_num = (amp_end - amp_begin)/amp_step + 1 ;
 nmse_all = zeros(1,amp_num);
 for amp = amp_begin: amp_step :amp_end
 %%  Load data
     test_num = test_num + 1;
-    load_path = save_path + "/data/10M/rand_bias0.6/amp"+amp+"/mat";
+    load_path = save_path + "/data/10M/rand_bias"+bias+"/amp"+amp+"/mat";
     fprintf("load amp=%d \n",amp);
     load_data
     totalNum = data_num*10;
@@ -43,8 +44,11 @@ for amp = amp_begin: amp_step :amp_end
     xTest_tmp = x(trainNum+1:end);
     yTest_tmp = y(trainNum+1:end);
 
-    xTrain_tmp = cellfun(@(cell1)(cell1*100*1.1^amp),xTrain_tmp,'UniformOutput',false);
-    xTest_tmp = cellfun(@(cell1)(cell1*100*1.1^amp),xTest_tmp,'UniformOutput',false);
+%     xTrain_tmp = cellfun(@(cell1)(cell1*100*1.1^amp),xTrain_tmp,'UniformOutput',false);
+%     xTest_tmp = cellfun(@(cell1)(cell1*100*1.1^amp),xTest_tmp,'UniformOutput',false);
+
+    xTrain_tmp = cellfun(@(cell1)(cell1*32000*(0.0015+(amp-1)*0.03994)),xTrain_tmp,'UniformOutput',false);
+    xTest_tmp = cellfun(@(cell1)(cell1*32000*(0.0015+(amp-1)*0.03994)),xTest_tmp,'UniformOutput',false);
 
     xTrain = xTrain_tmp;
     yTrain = yTrain_tmp;
@@ -129,8 +133,8 @@ for amp = amp_begin: amp_step :amp_end
     nmse_mean = mean(nmse_mat);
     nmse_all(test_num) = nmse_mean;
 %% Save data
-    savePath_txt = save_path + "/result/"+t.Month+"."+t.Day+"/10M/rand_bias0.6/single_amp/Threenonlinear";
-    savePath_mat = save_path + "/result/"+t.Month+"."+t.Day+"/10M/rand_bias0.6/single_amp/Threenonlinear";
+    savePath_txt = save_path + "/result/"+t.Month+"."+t.Day+"/10M/rand_bias"+bias+"/single_amp/Threenonlinear";
+    savePath_mat = save_path + "/result/"+t.Month+"."+t.Day+"/10M/rand_bias"+bias+"/single_amp/Threenonlinear";
     if(~exist(savePath_txt,'dir'))
         mkdir(char(savePath_txt));
     end
