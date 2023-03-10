@@ -2,7 +2,7 @@ clear
 close all
 
 t = datetime('now');
-save_path = "data_save/light_data_3.9";
+save_path = "data_save/light_data_3.10";
 % save_path = "data_save/2.23";
 
 %% Network parameters
@@ -16,10 +16,10 @@ LearnRateDropPeriod = 12;
 LearnRateDropFactor = 0.1;
 inilearningRate = 1e-2;
 bias = 0.3;
-
+ver = 1;
 %%
-fprintf("This is Threenonlinear network , single amp , ini learningRate = %e , min batch size = %d , DropPeriod = %d , DropFactor = %f  v2 \n",...
-    inilearningRate,miniBatchSize,LearnRateDropPeriod,LearnRateDropFactor);
+fprintf("This is Threenonlinear network , single amp , ini learningRate = %e , min batch size = %d , DropPeriod = %d , DropFactor = %f  v%d \n",...
+    inilearningRate,miniBatchSize,LearnRateDropPeriod,LearnRateDropFactor,ver);
 
 % cal_nmse = @(hat,exp)10*log10(sum(sum((hat-exp).^2))/sum(sum(exp.^2)));
 % clearvars -except snr save_path snr_begin snr_end inilearningRate inputSize ...
@@ -61,7 +61,9 @@ for amp = amp_begin: amp_step :amp_end
     totaltrain = numel(xTrain);
     % norm_cell = xTrain{floor(totaltrain/2)};
     % norm_factor = 1/norm(norm_cell)*sqrt(length(norm_cell));
-    load_path = "data_save/light_data_2.28/result/3.1/25M/8pam/mix_amp/Twononlinear";
+%     load_path = "data_save/light_data_2.28/result/3.1/25M/8pam/mix_amp/Twononlinear";
+
+    load_path = "data_save/light_data_3.9/data/10M/rand_bias0.3/";
     norm_mat = load(load_path+"/save_norm.mat");
     norm_names = fieldnames(norm_mat);
     norm_factor = gather(eval(strcat('norm_mat.',norm_names{1})));
@@ -133,8 +135,8 @@ for amp = amp_begin: amp_step :amp_end
     nmse_mean = mean(nmse_mat);
     nmse_all(test_num) = nmse_mean;
 %% Save data
-    savePath_txt = save_path + "/result/"+t.Month+"."+t.Day+"/10M/rand_bias"+bias+"/single_amp/Threenonlinear";
-    savePath_mat = save_path + "/result/"+t.Month+"."+t.Day+"/10M/rand_bias"+bias+"/single_amp/Threenonlinear";
+    savePath_txt = save_path + "/result/"+t.Month+"."+t.Day+"/10M/rand_bias"+bias+"/single_amp/Threenonlinear"+ver;
+    savePath_mat = save_path + "/result/"+t.Month+"."+t.Day+"/10M/rand_bias"+bias+"/single_amp/Threenonlinear"+ver;
     if(~exist(savePath_txt,'dir'))
         mkdir(char(savePath_txt));
     end

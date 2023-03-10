@@ -2,7 +2,7 @@ clear
 close all
 
 t = datetime('now');
-save_path = "data_save/light_data_3.9";
+save_path = "data_save/light_data_3.10";
 amp_begin = 1;
 amp_end = 26;
 looptime = 0;

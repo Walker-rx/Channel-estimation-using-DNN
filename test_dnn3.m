@@ -2,7 +2,7 @@ clear
 close all
 
 t = datetime('now');
-save_path = "data_save/light_data_3.9";
+save_path = "data_save/light_data_3.10";
 % save_path = "data_save/2.23";
 
 %% Network parameters
@@ -28,6 +28,7 @@ fprintf("Hidden Units = %d , v%d \n",numHiddenUnits,ver)
 
 %% Load data
 test_num = 0;
+% 
 % if bias == 0.3
 %     amp_begin = -8;
 %     amp_end = 46;
@@ -36,10 +37,11 @@ test_num = 0;
 %     amp_end = 50;
 % end
 % amp_step = 2;
+
 amp_begin = 1;
 amp_end = 26;
 amp_step = 1;
-for amp = amp_begin: amp_step :amp_end
+for amp = amp_begin : amp_step :amp_end 
     test_num = test_num + 1;
     load_path = save_path + "/data/10M/rand_bias"+bias+"/amp"+amp+"/mat";
     fprintf("load amp=%d \n",amp);
@@ -65,63 +67,20 @@ for amp = amp_begin: amp_step :amp_end
     if amp == amp_begin
         xTrain = xTrain_tmp;
         yTrain = yTrain_tmp;
-%             xTest = xTest_tmp;
-%             yTest = yTest_tmp;
     else
         xTrain = [xTrain xTrain_tmp];
         yTrain = [yTrain yTrain_tmp];
-%             xTest = [xTest xTest_tmp];
-%             yTest = [yTest yTest_tmp];
     end
     clear x y
 end
-%     load_path = save_path + "/25M/8pam/amp"+amp+"/mat";
-% %     load_path = save_path + "/data/snr"+snr;
-%     fprintf("amp=%d \n",amp);
-%     load_data
-% 
-%     totalNum = data_num*10;
-%     trainNum = floor(totalNum*0.8);
-%     xTrain1 = x(1:trainNum);
-%     yTrain1 = y(1:trainNum);
-%     xTest1 = x(trainNum+1:end);
-%     yTest1 = y(trainNum+1:end);
-%     xTrain1 = cellfun(@(cell1)(cell1*100*1.1^amp),xTrain1,'UniformOutput',false);
-%     xTest1 = cellfun(@(cell1)(cell1*100*1.1^amp),xTest1,'UniformOutput',false);
-%     clear x y
-% 
-%     load_path = save_path + "/25M/8pam/amp"+amp2+"/mat";
-%     fprintf("amp=%d \n",amp2);
-%     load_data
-%     totalNum = data_num*10;
-%     trainNum = floor(totalNum*0.8);
-%     xTrain2 = x(1:trainNum);
-%     yTrain2 = y(1:trainNum);
-%     xTest2 = x(trainNum+1:end);
-%     yTest2 = y(trainNum+1:end);
-%     xTrain2 = cellfun(@(cell1)(cell1*100*1.1^amp2),xTrain2,'UniformOutput',false);
-%     xTest2 = cellfun(@(cell1)(cell1*100*1.1^amp2),xTest2,'UniformOutput',false);
-%     norm_factor = 1/norm(xTrain2{1})*sqrt(length(xTrain2{1}));
-%     clear x y    
-%  
-%     load_path = save_path + "/25M/8pam/amp"+amp3+"/mat";
-%     fprintf("amp=%d \n",amp3);
-%     load_data
-%     totalNum = data_num*10;
-%     trainNum = floor(totalNum*0.8);
-%     xTrain3 = x(1:trainNum);
-%     yTrain3 = y(1:trainNum);
-%     xTest3 = x(trainNum+1:end);
-%     yTest3 = y(trainNum+1:end);
-%     xTrain3 = cellfun(@(cell1)(cell1*100*1.1^amp3),xTrain3,'UniformOutput',false);
-%     xTest3 = cellfun(@(cell1)(cell1*100*1.1^amp3),xTest3,'UniformOutput',false);
-%     clear x y 
 
 %%  Normalize data
 totaltrain = numel(xTrain);
 % norm_cell = xTrain{floor(totaltrain/2)};
 % norm_factor = 1/norm(norm_cell)*sqrt(length(norm_cell));
-load_path = "data_save/light_data_2.28/result/3.1/25M/8pam/mix_amp/Twononlinear";
+% load_path = "data_save/light_data_2.28/result/3.1/25M/8pam/mix_amp/Twononlinear";
+
+load_path = "data_save/light_data_3.9/data/10M/rand_bias0.3/";
 norm_mat = load(load_path+"/save_norm.mat");
 norm_names = fieldnames(norm_mat);
 norm_factor = gather(eval(strcat('norm_mat.',norm_names{1})));
