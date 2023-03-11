@@ -6,16 +6,22 @@ save_path = "data_save/light_data_3.10";
 % save_path = "data_save/2.23";
 
 %% Network parameters
-h_order = 30;
+ori_rate = 10e6;
+rec_rate = 60e6;
+rate_times = rec_rate/ori_rate;
+related_num = 10;
+split_num = 10;  % Cut a signal into split_num shares
+
+h_order = rate_times*related_num;
 inputSize = h_order;
 numHiddenUnits = 25;
-outputSize = 6;  % y=h*x+n;  y:(outputSize,m) h:(outputSize,inputSize) x:(inputSize,m)
+outputSize = rate_times;  % y=h*x+n;  y:(outputSize,m) h:(outputSize,inputSize) x:(inputSize,m)
 maxEpochs = 2000;
 miniBatchSize = 400;
 LearnRateDropPeriod = 5;
 LearnRateDropFactor = 0.1;
 inilearningRate = 1e-2;
-ver = 1;
+ver = 4;
 bias = 0.3;
 %%
 fprintf("This is Twononlinear network , ini learningRate = %e , min batch size = %d , DropPeriod = %d , DropFactor = %f \n",...
@@ -38,7 +44,7 @@ test_num = 0;
 % end
 % amp_step = 2;
 
-amp_begin = 1;
+amp_begin = 2;
 amp_end = 26;
 amp_step = 1;
 for amp = amp_begin : amp_step :amp_end 
@@ -96,7 +102,7 @@ end
 %%  Reshape data
 for i = 1:numel(xTrain)
     xTrain{i} = toeplitz(xTrain{i}(inputSize:-1:1),xTrain{i}(inputSize:end));
-    yTrain{i} = reshape(yTrain{i}(1:6000),outputSize,1000);
+    yTrain{i} = reshape(yTrain{i}(1:split_length*rate_times),outputSize,split_length);
     yTrain{i} = yTrain{i}(:,1:size(xTrain{i},2));
 end
 for i = 1:test_num
@@ -104,7 +110,7 @@ for i = 1:test_num
     ytop_tem = eval(['yTest',num2str(i)]);
     for j = 1:numel(xtop_tem)            
         xtop_tem{j} = toeplitz(xtop_tem{j}(inputSize:-1:1),xtop_tem{j}(inputSize:end));            
-        ytop_tem{j} = reshape(ytop_tem{j}(1:6000),outputSize,1000);
+        ytop_tem{j} = reshape(ytop_tem{j}(1:split_length*rate_times),outputSize,split_length);
         ytop_tem{j} = ytop_tem{j}(:,1:size(xtop_tem{j},2));
 %             xTest{i} = toeplitz(xTest{i}(inputSize:-1:1),xTest{i}(inputSize:end));
 %             yTest{i} = reshape(yTest{i}(1:6000),outputSize,1000);
@@ -212,6 +218,7 @@ fprintf(save_parameter,"\n \n");
 fprintf(save_parameter," Twononlinear ,\r\n ini learningRate = %e ,\r\n min batch size = %d , \r\n DropPeriod = %d ,\r\n DropFactor = %f ,\r\n amp begin = %d , amp end = %d , amp step = %d \r\n data_num = %d \r\n",...
                                       inilearningRate, miniBatchSize, LearnRateDropPeriod, LearnRateDropFactor, amp_begin, amp_end, amp_step, data_num);
 fprintf(save_parameter," validationFrequency is floor(numel(xTrain)/miniBatchSize/4)");
+fprintf(save_parameter,"\n H order = %d",h_order);
 fprintf(save_parameter,"\n Hidden Units = %d",numHiddenUnits);
 fclose(save_parameter);
 

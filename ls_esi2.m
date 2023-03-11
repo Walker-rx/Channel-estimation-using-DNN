@@ -1,14 +1,20 @@
-clear 
-close all
+% clear 
+% close all
 
 t = datetime('now');
 save_path = "data_save/light_data_3.10";
-amp_begin = 1;
+ori_rate = 10e6;
+rec_rate = 60e6;
+rate_times = rec_rate/ori_rate;
+split_num = 1;
+
+amp_begin = 2;
 amp_end = 26;
 looptime = 0;
 bias = 0.3;
 fprintf("v1 \n");
 for amp = amp_begin:amp_end
+%     amp=8;
 %% Load data
     looptime = looptime + 1;
     load_path = save_path + "/data/10M/rand_bias"+bias+"/amp"+amp+"/mat";
@@ -32,8 +38,8 @@ for amp = amp_begin:amp_end
 %% Reshape data
 %     xTrain{1} = [zeros(1,10) xTrain{1}.'];
     xTrain{1} = toeplitz(xTrain{1}(h_order:-1:1),xTrain{1}(h_order:end)).';
-    for i = 1:6
-        yTrain2 = yTrain{1}(i:6:i+6*(size(xTrain{1},1)-1));
+    for i = 1:rate_times 
+        yTrain2 = yTrain{1}(i:rate_times :i+rate_times *(size(xTrain{1},1)-1));
         h_hat = (xTrain{1}'*xTrain{1})\xTrain{1}'*yTrain2.';
         h(:,i) = h_hat;
     end
@@ -59,13 +65,13 @@ for amp = amp_begin:amp_end
 %     fprintf("%e \n",mmse);
 
 %% LS for different sampling rate
-    Nmse_mat = zeros(numel(xTest),6);
+    Nmse_mat = zeros(numel(xTest),rate_times);
     for j = 1:numel(xTest)
 %         xTest{j} = [zeros(1,10) xTest{j}.'];
         xTest{j} = toeplitz(xTest{j}(h_order:-1:1),xTest{j}(h_order:end)).';      
         xTest2 = xTest{j};
-        for k = 1:6
-            yTest2 = yTest{j}(k:6:k+6*(length(xTest2)-1));
+        for k = 1:rate_times 
+            yTest2 = yTest{j}(k:rate_times :k+rate_times*(length(xTest2)-1));
             y_hat = xTest2*h(:,k);
             y_hat = y_hat.';
 %             Msei = mse(y_hat,yTest2.');
@@ -76,7 +82,7 @@ for amp = amp_begin:amp_end
     Nmse = mean(mean(Nmse_mat));
 
 %%  Save data
-    savePath_result = save_path + "/result/"+t.Month+"."+t.Day+"/10M/rand_bias"+bias+"/norm_LS";
+    savePath_result = save_path + "/result/"+t.Month+"."+t.Day+"/10M/rand_bias"+bias+"/norm_LS2";
     if(~exist(savePath_result,'dir'))
         mkdir(char(savePath_result));
     end

@@ -28,9 +28,11 @@ fin_names = fieldnames(fin_mat);
 upsample_norm_names = fieldnames(upsample_norm_mat);
 data_num = 100;
 
-x = cell(1,data_num*10);
-y = cell(1,data_num*10);
+x = cell(1,data_num*split_num);
+y = cell(1,data_num*split_num);
 upsample_norm = zeros(1,data_num);
+data_length = 10000;
+split_length = data_length/split_num;
 % x = cell(data_num,1);
 % y = cell(data_num,1);
 for name_order = 1:data_num  
@@ -39,10 +41,10 @@ for name_order = 1:data_num
     fin_syn_point = gather(eval(strcat('fin_mat.',fin_names{name_order})));
     upsample_norm(name_order) = gather(eval(strcat('upsample_norm_mat.',upsample_norm_names{name_order})));
     data_ori = signal_ori(pilot_length+zero_length+1:end);
-    data_received = signal_received(fin_syn_point + (pilot_length+zero_length)*6 : end);
-    for i = 1:10
-        x{10*(name_order-1)+i} = [zeros(1,15),data_ori(1000*(i-1)+1:1000*i)]/upsample_norm(name_order);
-        y{10*(name_order-1)+i} = data_received(6000*(i-1)+1:6000*i);
+    data_received = signal_received(fin_syn_point + (pilot_length+zero_length)*rate_times : end);
+    for i = 1:split_num
+        x{split_num*(name_order-1)+i} = [zeros(1,15),data_ori(split_length*(i-1)+1 : split_length*i)]/upsample_norm(name_order);
+        y{split_num*(name_order-1)+i} = data_received(split_length*rate_times*(i-1)+1 : split_length*rate_times*i);
     end
 end
 x = gather(x);
