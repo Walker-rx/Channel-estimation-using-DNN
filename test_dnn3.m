@@ -9,7 +9,7 @@ save_path = "data_save/light_data_3.10";
 ori_rate = 10e6;
 rec_rate = 60e6;
 rate_times = rec_rate/ori_rate;
-related_num = 10;
+related_num = 12;
 split_num = 10;  % Cut a signal into split_num shares
 
 h_order = rate_times*related_num;
@@ -21,7 +21,7 @@ miniBatchSize = 400;
 LearnRateDropPeriod = 5;
 LearnRateDropFactor = 0.1;
 inilearningRate = 1e-2;
-ver = 4;
+ver = 1;
 bias = 0.3;
 %%
 fprintf("This is Twononlinear network , ini learningRate = %e , min batch size = %d , DropPeriod = %d , DropFactor = %f \n",...
@@ -44,13 +44,16 @@ test_num = 0;
 % end
 % amp_step = 2;
 
-amp_begin = 2;
-amp_end = 26;
-amp_step = 1;
-for amp = amp_begin : amp_step :amp_end 
+loop_begin = 2;
+loop_end = 26;
+loop_step = 1;
+
+amp_begin = 0.0015;
+amp_norm = 0.03994;
+for loop = loop_begin : loop_step :loop_end 
     test_num = test_num + 1;
-    load_path = save_path + "/data/10M/rand_bias"+bias+"/amp"+amp+"/mat";
-    fprintf("load amp=%d \n",amp);
+    load_path = save_path + "/data/10M/rand_bias"+bias+"/amp"+loop+"/mat";
+    fprintf("load amp=%d \n",loop);
     load_data
     totalNum = data_num*10;
     trainNum = floor(totalNum*0.8);
@@ -62,15 +65,15 @@ for amp = amp_begin : amp_step :amp_end
 %     xTrain_tmp = cellfun(@(cell1)(cell1*100*1.1^amp),xTrain_tmp,'UniformOutput',false);
 %     xTest_tmp = cellfun(@(cell1)(cell1*100*1.1^amp),xTest_tmp,'UniformOutput',false);
 
-    xTrain_tmp = cellfun(@(cell1)(cell1*32000*(0.0015+(amp-1)*0.03994)),xTrain_tmp,'UniformOutput',false);
-    xTest_tmp = cellfun(@(cell1)(cell1*32000*(0.0015+(amp-1)*0.03994)),xTest_tmp,'UniformOutput',false);
+    xTrain_tmp = cellfun(@(cell1)(cell1*32000*(amp_begin+(loop-1)*amp_norm)),xTrain_tmp,'UniformOutput',false);
+    xTest_tmp = cellfun(@(cell1)(cell1*32000*(amp_begin+(loop-1)*amp_norm)),xTest_tmp,'UniformOutput',false);
 
     xTest_name = ['xTest',num2str(test_num)];
     yTest_name = ['yTest',num2str(test_num)];
     eval([xTest_name,'=xTest_tmp;']);
     eval([yTest_name,'=yTest_tmp;']);
 
-    if amp == amp_begin
+    if loop == loop_begin
         xTrain = xTrain_tmp;
         yTrain = yTrain_tmp;
     else
@@ -86,12 +89,17 @@ totaltrain = numel(xTrain);
 % norm_factor = 1/norm(norm_cell)*sqrt(length(norm_cell));
 % load_path = "data_save/light_data_2.28/result/3.1/25M/8pam/mix_amp/Twononlinear";
 
-load_path = "data_save/light_data_3.9/data/10M/rand_bias0.3/";
+load_path = "data_save/light_data_3.10/data/10M/rand_bias0.3/";
 norm_mat = load(load_path+"/save_norm.mat");
 norm_names = fieldnames(norm_mat);
 norm_factor = gather(eval(strcat('norm_mat.',norm_names{1})));
 
 xTrain = cellfun(@(cell1)(cell1*norm_factor),xTrain,'UniformOutput',false);
+
+band_power = zeros(1,(loop_end-loop_begin)/loop_step+1);
+for i = 1:(loop_end-loop_begin)/loop_step+1
+    band_power(i) = bandpower(xTrain{10+(i-1)*trainNum});
+end
 
 for i = 1:test_num
     xTest_nor = eval(['xTest',num2str(i)]);
@@ -216,7 +224,7 @@ end
 save_parameter = fopen(savePath_txt+"/save_parameter.txt",'w');
 fprintf(save_parameter,"\n \n");
 fprintf(save_parameter," Twononlinear ,\r\n ini learningRate = %e ,\r\n min batch size = %d , \r\n DropPeriod = %d ,\r\n DropFactor = %f ,\r\n amp begin = %d , amp end = %d , amp step = %d \r\n data_num = %d \r\n",...
-                                      inilearningRate, miniBatchSize, LearnRateDropPeriod, LearnRateDropFactor, amp_begin, amp_end, amp_step, data_num);
+                                      inilearningRate, miniBatchSize, LearnRateDropPeriod, LearnRateDropFactor, loop_begin, loop_end, loop_step, data_num);
 fprintf(save_parameter," validationFrequency is floor(numel(xTrain)/miniBatchSize/4)");
 fprintf(save_parameter,"\n H order = %d",h_order);
 fprintf(save_parameter,"\n Hidden Units = %d",numHiddenUnits);
@@ -234,16 +242,20 @@ for i = 1:test_num
     if i == 1
         save_Nmse = fopen(savePath_txt+"/save_Nmse.txt",'w');
         save_Nmse_valid = fopen(savePath_txt+"/save_Nmse_valid.txt",'w');
+        save_bandpower = fopen(savePath_txt+"/save_bandpower.txt",'w');
 %         save(savePath_mat+"/save_Nmse.mat",save_nmse_name);
     else
         save_Nmse = fopen(savePath_txt+"/save_Nmse.txt",'a');
         save_Nmse_valid = fopen(savePath_txt+"/save_Nmse_valid.txt",'a');
+        save_bandpower = fopen(savePath_txt+"/save_bandpower.txt",'a');
 %         save(savePath_mat+"/save_Nmse.mat",save_nmse_name,'-append');
     end
     fprintf(save_Nmse,"%f \n" , nmse_mean(i));
     fprintf(save_Nmse_valid,"%f \n" , nmse_valid_mean(i));
+    fprintf(save_bandpower,"%f \n" , band_power(i));
     fclose(save_Nmse);
     fclose(save_Nmse_valid);
+    fclose(save_bandpower);
 end
 
 fprintf(" \n Twononlinear, ini learningRate = %e , min batch size = %d , DropPeriod = %d , DropFactor = %f , data_num = %d \n",...

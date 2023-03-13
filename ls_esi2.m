@@ -2,27 +2,29 @@
 % close all
 
 t = datetime('now');
-save_path = "data_save/light_data_3.10";
+save_path = "data_save/light_data_3.11";
 ori_rate = 10e6;
 rec_rate = 60e6;
 rate_times = rec_rate/ori_rate;
 split_num = 1;
 
-amp_begin = 2;
-amp_end = 26;
+loop_begin = 1;
+loop_end = 101;
+amp_begin = 0.0015;
+amp_norm = 0.009985;
 looptime = 0;
 bias = 0.3;
-fprintf("v1 \n");
-for amp = amp_begin:amp_end
+fprintf("light_data_3.11 v1 \n");
+for loop = loop_begin:loop_end
 %     amp=8;
 %% Load data
     looptime = looptime + 1;
-    load_path = save_path + "/data/10M/rand_bias"+bias+"/amp"+amp+"/mat";
+    load_path = save_path + "/data/10M/rand_bias"+bias+"/amp"+loop+"/mat";
     load_data
 %% Normalize data
 %     x = cellfun(@(cell1)(cell1*100*1.1^amp),x,'UniformOutput',false);
-    x = cellfun(@(cell1)(cell1*32000*(0.0015+(amp-1)*0.03994)),x,'UniformOutput',false);
-    load_path = "data_save/light_data_2.28/result/3.1/25M/8pam/mix_amp/Twononlinear";
+    x = cellfun(@(cell1)(cell1*32000*(amp_begin+(loop-1)*amp_norm)),x,'UniformOutput',false);
+    load_path = "data_save/light_data_3.10/data/10M/rand_bias0.3/";
     norm_mat = load(load_path+"/save_norm.mat");
     norm_names = fieldnames(norm_mat);
     norm_factor = gather(eval(strcat('norm_mat.',norm_names{1})));
@@ -89,7 +91,7 @@ for amp = amp_begin:amp_end
     
     saveH = ['save_h_' num2str(looptime)];
     eval([saveH,'=h;']);   
-    if amp == amp_begin
+    if loop == loop_begin
         save_Nmse = fopen(savePath_result+"/save_Nmse.txt",'w');
         save(savePath_result+"/save_h.mat",saveH);
     else
@@ -98,5 +100,5 @@ for amp = amp_begin:amp_end
     end  
     fprintf(save_Nmse,'%f \r\n',Nmse);
     fclose(save_Nmse);
-    fprintf(' amp = %d , nmse = %.6g \r\n',amp,Nmse);
+    fprintf(' amp = %d , nmse = %.6g \r\n',loop,Nmse);
 end
