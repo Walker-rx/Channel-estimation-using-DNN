@@ -2,14 +2,14 @@ clear
 close all
 
 t = datetime('now');
-save_path = "data_save/light_data_3.10";
+save_path = "data_save/light_data_3.11";
 % save_path = "data_save/2.23";
 
 %% Network parameters
 ori_rate = 10e6;
-rec_rate = 60e6;
+rec_rate = 150e6;
 rate_times = rec_rate/ori_rate;
-related_num = 12;
+related_num = 5;
 split_num = 10;  % Cut a signal into split_num shares
 
 h_order = rate_times*related_num;
@@ -21,7 +21,7 @@ miniBatchSize = 200;
 LearnRateDropPeriod = 12;
 LearnRateDropFactor = 0.1;
 inilearningRate = 1e-2;
-ver = 5;
+ver = 1;
 bias = 0.3;
 %%
 fprintf("This is Threenonlinear network , single amp , ini learningRate = %e , min batch size = %d , DropPeriod = %d , DropFactor = %f  v%d \n",...
@@ -32,15 +32,16 @@ fprintf("This is Threenonlinear network , single amp , ini learningRate = %e , m
 %                   numHiddenUnits outputSize maxEpochs miniBatchSize ...
 %                   LearnRateDropPeriod LearnRateDropFactor cal_nmse
 test_num = 0;
-loop_begin = 2;
-loop_end = 26;
+loop_begin = 1;
+loop_end = 101;
 loop_step = 1;
 loop_num = (loop_end - loop_begin)/loop_step + 1 ;
 
 amp_begin = 0.0015;
-amp_norm = 0.03994;
+amp_norm = 0.009985;
+% amp_norm = 0.03994;
 nmse_all = zeros(1,loop_num);
-for loop = loop_begin: loop_step :loop_end
+for loop = 10: loop_step :loop_end
 %%  Load data
     test_num = test_num + 1;
     load_path = save_path + "/data/10M/rand_bias"+bias+"/amp"+loop+"/mat";
@@ -123,7 +124,7 @@ for loop = loop_begin: loop_step :loop_end
     % 'ExecutionEnvironment','gpu',...
 
 %% Train network
-    looptime = 3;
+    looptime = 1;
     nmse_mat = zeros(1,looptime);
     
     for i = 1:looptime
@@ -157,9 +158,10 @@ for loop = loop_begin: loop_step :loop_end
         fprintf(save_parameter,"\n \n");
         fprintf(save_parameter," Threenonlinear ,\r\n ini learningRate = %e ,\r\n min batch size = %d , \r\n DropPeriod = %d ,\r\n DropFactor = %f ,\r\n amp begin = %d , amp end = %d , amp step = %d \r\n data_num = %d \r\n",...
             inilearningRate, miniBatchSize, LearnRateDropPeriod, LearnRateDropFactor, loop_begin, loop_end, loop_step, data_num);
-        fprintf(save_parameter," validationFrequency is floor(size(xTrain{1},2)/miniBatchSize");
-        fprintf(save_parameter,"\n H order = %d",h_order);
-        fprintf(save_parameter,"\n Hidden Units = %d",numHiddenUnits);
+        fprintf(save_parameter," validationFrequency is floor(size(xTrain{1},2)/miniBatchSize \n");
+        fprintf(save_parameter," origin rate = %e , receive rate = %e \n",ori_rate,rec_rate);
+        fprintf(save_parameter," H order = %d \n",h_order);
+        fprintf(save_parameter," Hidden Units = %d \n",numHiddenUnits);
         fclose(save_parameter);
     end
 

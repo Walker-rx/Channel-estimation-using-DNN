@@ -4,19 +4,20 @@
 t = datetime('now');
 save_path = "data_save/light_data_3.11";
 ori_rate = 10e6;
-rec_rate = 60e6;
+rec_rate = 150e6;
 rate_times = rec_rate/ori_rate;
 split_num = 1;
 
 loop_begin = 1;
 loop_end = 101;
+loop_step = 2;
 amp_begin = 0.0015;
 amp_norm = 0.009985;
+% amp_norm = 0.03994;
 looptime = 0;
 bias = 0.3;
 fprintf("light_data_3.11 v1 \n");
-for loop = loop_begin:loop_end
-%     amp=8;
+for loop = loop_begin:loop_step:loop_end
 %% Load data
     looptime = looptime + 1;
     load_path = save_path + "/data/10M/rand_bias"+bias+"/amp"+loop+"/mat";
@@ -34,6 +35,8 @@ for loop = loop_begin:loop_end
     yTrain = y(1);
     xTest = x(2:end);
     yTest = y(2:end);
+    
+    band_power = bandpower(xTrain{1});
 
     h_order = 30;
     h = zeros(30,6);
@@ -84,7 +87,7 @@ for loop = loop_begin:loop_end
     Nmse = mean(mean(Nmse_mat));
 
 %%  Save data
-    savePath_result = save_path + "/result/"+t.Month+"."+t.Day+"/10M/rand_bias"+bias+"/norm_LS2";
+    savePath_result = save_path + "/result/"+t.Month+"."+t.Day+"/10M/rand_bias"+bias+"/norm_LS";
     if(~exist(savePath_result,'dir'))
         mkdir(char(savePath_result));
     end
@@ -93,12 +96,16 @@ for loop = loop_begin:loop_end
     eval([saveH,'=h;']);   
     if loop == loop_begin
         save_Nmse = fopen(savePath_result+"/save_Nmse.txt",'w');
+        save_bandpower = fopen(savePath_result+"/save_bandpower.txt",'w');
         save(savePath_result+"/save_h.mat",saveH);
     else
         save_Nmse = fopen(savePath_result+"/save_Nmse.txt",'a');
+        save_bandpower = fopen(savePath_result+"/save_bandpower.txt",'a');
         save(savePath_result+"/save_h.mat",saveH,'-append');
     end  
     fprintf(save_Nmse,'%f \r\n',Nmse);
+    fprintf(save_bandpower,'%f \r\n',band_power);
     fclose(save_Nmse);
+    fclose(save_bandpower);
     fprintf(' amp = %d , nmse = %.6g \r\n',loop,Nmse);
 end
