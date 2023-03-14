@@ -26,7 +26,7 @@ x_names = fieldnames(x_mat);
 y_names = fieldnames(y_mat);
 fin_names = fieldnames(fin_mat);
 upsample_norm_names = fieldnames(upsample_norm_mat);
-data_num = 25;
+data_num = 100/2;
 
 x = cell(1,data_num*split_num);
 y = cell(1,data_num*split_num);

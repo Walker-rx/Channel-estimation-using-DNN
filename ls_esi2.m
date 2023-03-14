@@ -1,11 +1,12 @@
-% clear 
-% close all
+clear 
+close all
 
 t = datetime('now');
 save_path = "data_save/light_data_3.11";
 ori_rate = 10e6;
 rec_rate = 150e6;
 rate_times = rec_rate/ori_rate;
+related_num = 5;
 split_num = 1;
 
 loop_begin = 1;
@@ -18,6 +19,7 @@ looptime = 0;
 bias = 0.3;
 fprintf("light_data_3.11 v1 \n");
 for loop = loop_begin:loop_step:loop_end
+
 %% Load data
     looptime = looptime + 1;
     load_path = save_path + "/data/10M/rand_bias"+bias+"/amp"+loop+"/mat";
@@ -31,21 +33,54 @@ for loop = loop_begin:loop_step:loop_end
     norm_factor = gather(eval(strcat('norm_mat.',norm_names{1})));
     x = cellfun(@(cell1)(cell1*norm_factor),x,'UniformOutput',false);
 %%
-    xTrain = x(1);
-    yTrain = y(1);
-    xTest = x(2:end);
-    yTest = y(2:end);
+
+    totalNum = numel(x);
+    trainNum = floor(totalNum*0.8);
+    xTrain = x(1:trainNum);
+    yTrain = y(1:trainNum);
+    xTest = x(trainNum+1:end);
+    yTest = y(trainNum+1:end);
+
+%     xTrain = x(1);
+%     yTrain = y(1);
+%     xTest = x(2:end);
+%     yTest = y(2:end);
     
     band_power = bandpower(xTrain{1});
 
-    h_order = 30;
-    h = zeros(30,6);
+    h_order = rate_times*related_num;
+    h = zeros(h_order,rate_times);
 %% Reshape data
-%     xTrain{1} = [zeros(1,10) xTrain{1}.'];
-    xTrain{1} = toeplitz(xTrain{1}(h_order:-1:1),xTrain{1}(h_order:end)).';
+
+%     xTrain{1} = toeplitz(xTrain{1}(h_order:-1:1),xTrain{1}(h_order:end)).';
+
+    for i = 1:numel(xTrain)
+        xTrain{i} = toeplitz(xTrain{i}(h_order:-1:1),xTrain{i}(h_order:end)).';
+    end
+
     for i = 1:rate_times 
-        yTrain2 = yTrain{1}(i:rate_times :i+rate_times *(size(xTrain{1},1)-1));
-        h_hat = (xTrain{1}'*xTrain{1})\xTrain{1}'*yTrain2.';
+        yTrain2 = cell(1,numel(yTrain));
+        for j = 1:numel(yTrain)
+            yTrain2{j} = yTrain{j}(i:rate_times :i+rate_times *(size(xTrain{1},1)-1));
+        end
+
+        h_tmp = zeros(size(xTrain{1},2),size(xTrain{1},2));
+        for j = 1:numel(xTrain)
+            h_tmp = h_tmp + xTrain{j}.'*xTrain{j};
+        end
+
+        h_tmp2 = zeros(size(xTrain{1},2) , size(xTrain{1},1)*numel(xTrain));
+        for j = 1:numel(xTrain)
+            h_tmp2(: , size(xTrain{1},1)*(j-1)+1 : size(xTrain{1},1)*j) = h_tmp\xTrain{j}.';
+        end
+
+        h_hat = zeros(size(xTrain{1},2) , 1);
+        for j = 1:numel(xTrain)
+            h_hat = h_hat + h_tmp2(:,size(xTrain{1},1)*(j-1)+1:size(xTrain{1},1)*j)*yTrain2{j}.';
+        end
+
+%         yTrain2 = yTrain{1}(i:rate_times :i+rate_times *(size(xTrain{1},1)-1));
+%         h_hat = (xTrain{1}'*xTrain{1})\xTrain{1}'*yTrain2.';
         h(:,i) = h_hat;
     end
     
@@ -92,6 +127,14 @@ for loop = loop_begin:loop_step:loop_end
         mkdir(char(savePath_result));
     end
     
+    save_parameter = fopen(savePath_result+"/save_parameter.txt",'w');
+    fprintf(save_parameter,"\n \n");
+    fprintf(save_parameter," LS \r\n amp begin = %d , amp end = %d , amp step = %d \r\n data_num = %d \r\n",...
+         loop_begin, loop_end, loop_step, data_num);
+    fprintf(save_parameter," origin rate = %e , receive rate = %e \n",ori_rate,rec_rate);
+    fprintf(save_parameter," H order = %d \n",h_order);
+    fclose(save_parameter);
+
     saveH = ['save_h_' num2str(looptime)];
     eval([saveH,'=h;']);   
     if loop == loop_begin

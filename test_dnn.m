@@ -21,7 +21,7 @@ miniBatchSize = 200;
 LearnRateDropPeriod = 12;
 LearnRateDropFactor = 0.1;
 inilearningRate = 1e-2;
-ver = 1;
+ver = 3;
 bias = 0.3;
 %%
 fprintf("This is Threenonlinear network , single amp , ini learningRate = %e , min batch size = %d , DropPeriod = %d , DropFactor = %f  v%d \n",...
@@ -34,20 +34,20 @@ fprintf("This is Threenonlinear network , single amp , ini learningRate = %e , m
 test_num = 0;
 loop_begin = 1;
 loop_end = 101;
-loop_step = 1;
+loop_step = 2;
 loop_num = (loop_end - loop_begin)/loop_step + 1 ;
 
 amp_begin = 0.0015;
 amp_norm = 0.009985;
 % amp_norm = 0.03994;
 nmse_all = zeros(1,loop_num);
-for loop = 10: loop_step :loop_end
+for loop = loop_begin: loop_step :loop_end
 %%  Load data
     test_num = test_num + 1;
     load_path = save_path + "/data/10M/rand_bias"+bias+"/amp"+loop+"/mat";
     fprintf("load amp=%d \n",loop);
     load_data
-    totalNum = data_num*10;
+    totalNum = data_num*split_num;
     trainNum = floor(totalNum*0.8);
     xTrain_tmp = x(1:trainNum);
     yTrain_tmp = y(1:trainNum);

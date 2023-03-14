@@ -21,7 +21,7 @@ miniBatchSize = 400;
 LearnRateDropPeriod = 5;
 LearnRateDropFactor = 0.1;
 inilearningRate = 1e-2;
-ver = 1;
+ver = 2;
 bias = 0.3;
 %%
 fprintf("This is Threenonlinear network , ini learningRate = %e , min batch size = %d , DropPeriod = %d , DropFactor = %f \n",...
@@ -58,7 +58,7 @@ for loop = loop_begin : loop_step :loop_end
     load_path = save_path + "/data/10M/rand_bias"+bias+"/amp"+loop+"/mat";
     fprintf("load amp=%d \n",loop);
     load_data
-    totalNum = data_num*10;
+    totalNum = data_num*split_num;
     trainNum = floor(totalNum*0.8);
     xTrain_tmp = x(1:trainNum);
     yTrain_tmp = y(1:trainNum);
@@ -230,9 +230,9 @@ save_parameter = fopen(savePath_txt+"/save_parameter.txt",'w');
 fprintf(save_parameter,"\n \n");
 fprintf(save_parameter," Threenonlinear ,\r\n ini learningRate = %e ,\r\n min batch size = %d , \r\n DropPeriod = %d ,\r\n DropFactor = %f ,\r\n amp begin = %d , amp end = %d , amp step = %d \r\n data_num = %d \r\n",...
                                       inilearningRate, miniBatchSize, LearnRateDropPeriod, LearnRateDropFactor, loop_begin, loop_end, loop_step, data_num);
-fprintf(save_parameter," validationFrequency is floor(numel(xTrain)/miniBatchSize/4)");
-fprintf(save_parameter,"\n H order = %d",h_order);
-fprintf(save_parameter,"\n Hidden Units = %d",numHiddenUnits);
+fprintf(save_parameter," validationFrequency is floor(numel(xTrain)/miniBatchSize/4) \n");
+fprintf(save_parameter," H order = %d \n",h_order);
+fprintf(save_parameter," Hidden Units = %d \n",numHiddenUnits);
 fclose(save_parameter);
 
 save_nmse_name = 'save_nmse';
