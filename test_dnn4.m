@@ -2,15 +2,14 @@ clear
 close all
 
 t = datetime('now');
-save_path = "data_save/light_data_3.11";
+save_path = "data_save/light_data_3.16";
 % save_path = "data_save/2.23";
 
 %% Network parameters
 ori_rate = 10e6;
-rec_rate = 150e6;
+rec_rate = 60e6;
 rate_times = rec_rate/ori_rate;
-related_num = 5;
-data_num = 100;
+related_num = 8;
 split_num = 10;  % Cut a signal into split_num shares
 
 h_order = rate_times*related_num;
@@ -19,58 +18,79 @@ numHiddenUnits = 60;
 outputSize = rate_times;  % y=h*x+n;  y:(outputSize,m) h:(outputSize,inputSize) x:(inputSize,m)
 maxEpochs = 2000;
 miniBatchSize = 400;
-LearnRateDropPeriod = 5;
+LearnRateDropPeriod = 8;
 LearnRateDropFactor = 0.1;
 inilearningRate = 1e-2;
-ver = 2;
+ver = 10;
 bias = 0.3;
 %%
 fprintf("This is Threenonlinear network , ini learningRate = %e , min batch size = %d , DropPeriod = %d , DropFactor = %f \n",...
     inilearningRate,miniBatchSize,LearnRateDropPeriod,LearnRateDropFactor);
 fprintf("Hidden Units = %d , v%d \n",numHiddenUnits,ver)
-% cal_nmse = @(hat,exp)10*log10(sum(sum((hat-exp).^2))/sum(sum(exp.^2)));
-% clearvars -except snr save_path snr_begin snr_end inilearningRate inputSize ...
-%                   numHiddenUnits outputSize maxEpochs miniBatchSize ...
-%                   LearnRateDropPeriod LearnRateDropFactor cal_nmse
 
 %% Load data
-test_num = 0;
-% 
-% if bias == 0.3
-%     amp_begin = -8;
-%     amp_end = 46;
-% else
-%     amp_begin = -4;
-%     amp_end = 50;
-% end
-% amp_step = 2;
 
-loop_begin = 1;
-loop_end = 101;
 loop_step = 2;
-loop_num = (loop_end-loop_begin)/loop_step+1;
+test_begin = 1;
+test_end = 49;
+testLoop_num = (test_end-test_begin)/loop_step+1;
+train_begin = 51;
+train_end = 51;
+trainLoop_num = (train_end-train_begin)/loop_step+1;
 
 amp_begin = 0.0015;
-% amp_norm = 0.03994;
-amp_norm = 0.009985;
-save_amp = zeros(1,loop_num);
-for loop = loop_begin : loop_step :loop_end 
-    test_num = test_num + 1;
+amp_norm = 0.019970; 
+
+save_Testamp = zeros(1,testLoop_num+trainLoop_num);
+save_Testamp_log = zeros(1,testLoop_num+trainLoop_num);
+save_Trainamp = zeros(1,trainLoop_num);
+save_Trainamp_log = zeros(1,trainLoop_num);
+
+test_num = 0;
+for loop = test_begin : loop_step :test_end
+    test_num = test_num+1;
+    load_path = save_path + "/data/10M/rand_bias"+bias+"/amp"+loop+"/mat";   
+%     data_num = 20;
+    load_data_all
+    fprintf(" Test data , load amp=%d , data num = %d \n",loop,data_num);
+
+    xTest_tmp = x;
+    yTest_tmp = y;
+    
+    amp_loop = 32000*(amp_begin+(loop-1)*amp_norm);
+    save_Testamp(test_num) = amp_loop;
+    save_Testamp_log(test_num) = 10*log10(amp_loop^2);
+    xTest_tmp = cellfun(@(cell1)(cell1*amp_loop),xTest_tmp,'UniformOutput',false);
+    
+    xTest_name = ['xTest',num2str(test_num)];
+    yTest_name = ['yTest',num2str(test_num)];
+    eval([xTest_name,'=xTest_tmp;']);
+    eval([yTest_name,'=yTest_tmp;']);
+
+    clear x y
+end
+testData_num = data_num;
+
+train_num = 0;
+for loop = train_begin : train_end 
+    train_num = train_num+1;
+    test_num = test_num+1;
     load_path = save_path + "/data/10M/rand_bias"+bias+"/amp"+loop+"/mat";
-    fprintf("load amp=%d \n",loop);
-    load_data
+    load_data_all
+    fprintf(" Train data , load amp=%d , data_num = %d \n",loop,data_num);
+
     totalNum = data_num*split_num;
-    trainNum = floor(totalNum*0.8);
+    trainNum = floor(totalNum*0.95);
     xTrain_tmp = x(1:trainNum);
     yTrain_tmp = y(1:trainNum);
     xTest_tmp = x(trainNum+1:end);
     yTest_tmp = y(trainNum+1:end);
-
-%     xTrain_tmp = cellfun(@(cell1)(cell1*100*1.1^amp),xTrain_tmp,'UniformOutput',false);
-%     xTest_tmp = cellfun(@(cell1)(cell1*100*1.1^amp),xTest_tmp,'UniformOutput',false);
     
     amp_loop = 32000*(amp_begin+(loop-1)*amp_norm);
-    save_amp(test_num) = amp_loop;
+    save_Trainamp(train_num) = amp_loop;
+    save_Testamp(test_num) = amp_loop;
+    save_Trainamp_log(train_num) = 10*log10(amp_loop^2);
+    save_Testamp_log(test_num) = 10*log10(amp_loop^2);
     xTrain_tmp = cellfun(@(cell1)(cell1*amp_loop),xTrain_tmp,'UniformOutput',false);
     xTest_tmp = cellfun(@(cell1)(cell1*amp_loop),xTest_tmp,'UniformOutput',false);
     
@@ -79,7 +99,7 @@ for loop = loop_begin : loop_step :loop_end
     eval([xTest_name,'=xTest_tmp;']);
     eval([yTest_name,'=yTest_tmp;']);
 
-    if loop == loop_begin
+    if loop == train_begin
         xTrain = xTrain_tmp;
         yTrain = yTrain_tmp;
     else
@@ -88,12 +108,10 @@ for loop = loop_begin : loop_step :loop_end
     end
     clear x y
 end
+trainData_num = data_num*0.95;
 
 %%  Normalize data
 totaltrain = numel(xTrain);
-% norm_cell = xTrain{floor(totaltrain/2)};
-% norm_factor = 1/norm(norm_cell)*sqrt(length(norm_cell));
-% load_path = "data_save/light_data_2.28/result/3.1/25M/8pam/mix_amp/Twononlinear";
 
 load_path = "data_save/light_data_3.10/data/10M/rand_bias0.3/";
 norm_mat = load(load_path+"/save_norm.mat");
@@ -102,15 +120,22 @@ norm_factor = gather(eval(strcat('norm_mat.',norm_names{1})));
 
 xTrain = cellfun(@(cell1)(cell1*norm_factor),xTrain,'UniformOutput',false);
 
-band_power = zeros(1,(loop_end-loop_begin)/loop_step+1);
-for i = 1:(loop_end-loop_begin)/loop_step+1
-    band_power(i) = bandpower(xTrain{10+(i-1)*trainNum});
+Train_bandpower = zeros(1,trainLoop_num);
+for i = 1:trainLoop_num
+    Train_bandpower(i) = bandpower(xTrain{10+(i-1)*trainData_num});
 end
+
 
 for i = 1:test_num
     xTest_nor = eval(['xTest',num2str(i)]);
     xTest_nor = cellfun(@(cell1)(cell1*norm_factor),xTest_nor,'UniformOutput',false);
     eval([['xTest',num2str(i)],'= xTest_nor;']);
+end
+
+Test_bandpower = zeros(1,test_num);
+for i = 1:test_num
+    xTest_nor = eval(['xTest',num2str(i)]);
+    Test_bandpower(i) = bandpower(xTest_nor{10});
 end
 
 %%  Reshape data
@@ -126,17 +151,13 @@ for i = 1:test_num
         xtop_tem{j} = toeplitz(xtop_tem{j}(inputSize:-1:1),xtop_tem{j}(inputSize:end));            
         ytop_tem{j} = reshape(ytop_tem{j}(1:split_length*rate_times),outputSize,split_length);
         ytop_tem{j} = ytop_tem{j}(:,1:size(xtop_tem{j},2));
-%             xTest{i} = toeplitz(xTest{i}(inputSize:-1:1),xTest{i}(inputSize:end));
-%             yTest{i} = reshape(yTest{i}(1:6000),outputSize,1000);
-%             yTest{i} = yTest{i}(:,1:size(xTest1{i},2));
     end
     eval([['xTest',num2str(i)],'= xtop_tem;']);
     eval([['yTest',num2str(i)],'= ytop_tem;']);
 end
 
 %% Initialize network
-% validationFrequency = floor(size(xTrain{1},2)/miniBatchSize);
-% validationFrequency = floor(size(xTrain{1},2)/100);
+
 validationFrequency = floor(numel(xTrain)/miniBatchSize/4);
 
 layers = [...
@@ -171,15 +192,18 @@ options = trainingOptions('adam', ...
 % 'ExecutionEnvironment','gpu',...
 
 %% Train network
-looptime = 3;
+looptime = 2;
+validTest_num = trainLoop_num;
 for i = 1:test_num
     eval([['nmse',num2str(i),'_mat'],'= zeros(1,looptime);']);
+end
+for i = 1:validTest_num
     eval([['nmse_valid',num2str(i),'_mat'],'= zeros(1,looptime);']);
 end
 
-xTrain_reshape = reshape(xTrain,[],test_num);
-yTrain_reshape = reshape(yTrain,[],test_num);
-for i = 1:test_num
+xTrain_reshape = reshape(xTrain,[],validTest_num);
+yTrain_reshape = reshape(yTrain,[],validTest_num);
+for i = 1:validTest_num
     xTrain_i = ['xValid',num2str(i)];
     eval([xTrain_i ,'= xTrain_reshape(:,i);']);
     yTrain_i = ['yValid',num2str(i)];
@@ -192,35 +216,43 @@ for i = 1:looptime
     for j = 1:test_num
         x_fortest = eval(['xTest',num2str(j)]);
         y_fortest = eval(['yTest',num2str(j)]);
-        x_valid = eval(['xValid',num2str(j)]).';
-        y_valid = eval(['yValid',num2str(j)]).';
 
         y_hat = predict(net,x_fortest,'MiniBatchSize',miniBatchSize);
         y_hatT = y_hat.';
-        y_hat_valid = predict(net,x_valid,'MiniBatchSize',miniBatchSize);
-        y_hatT_valid = y_hat_valid.';
 
         nmseNum = cellfun(@(hat,exp)10*log10(sum(sum((hat-exp).^2))/sum(sum(exp.^2))),y_hatT,y_fortest);
         nmse_loop = mean(nmseNum);
         eval([['nmse',num2str(j),'_mat(',num2str(i),')'],'=nmse_loop;']);
+    end   
+
+    for j = 1:validTest_num
+        x_valid = eval(['xValid',num2str(j)]).';
+        y_valid = eval(['yValid',num2str(j)]).';
+
+        y_hat_valid = predict(net,x_valid,'MiniBatchSize',miniBatchSize);
+        y_hatT_valid = y_hat_valid.';
+
         nmseNum_valid = cellfun(@(hat,exp)10*log10(sum(sum((hat-exp).^2))/sum(sum(exp.^2))),y_hatT_valid ,y_valid);
         nmse_loop_valid = mean(nmseNum_valid);
         eval([['nmse_valid',num2str(j),'_mat(',num2str(i),')'],'=nmse_loop_valid;']);
-    end       
+    end
+
     fprintf("already training %d times \n",i);
 end
 nmse_mean = zeros(1,test_num);
-nmse_valid_mean = zeros(1,test_num);
+nmse_valid_mean = zeros(1,validTest_num);
 for i = 1:test_num
     nmse_mean_tem = mean(eval(['nmse',num2str(i),'_mat']));
     nmse_mean(i) = nmse_mean_tem;
+end
+for i = 1:validTest_num
     nmse_valid_mean_tem = mean(eval(['nmse_valid',num2str(i),'_mat']));
     nmse_valid_mean(i) = nmse_valid_mean_tem;
 end
 
 %% Save data
-savePath_txt = save_path + "/result/"+t.Month+"."+t.Day+"/10M/rand_bias"+bias+"/mix_amp/Threenonlinear"+ver;   
-savePath_mat = save_path + "/result/"+t.Month+"."+t.Day+"/10M/rand_bias"+bias+"/mix_amp/Threenonlinear"+ver; 
+savePath_txt = save_path + "/result/"+t.Month+"."+t.Day+"/10M/rand_bias"+bias+"/max_amp/Threenonlinear"+ver;   
+savePath_mat = save_path + "/result/"+t.Month+"."+t.Day+"/10M/rand_bias"+bias+"/max_amp/Threenonlinear"+ver; 
 if(~exist(savePath_txt,'dir'))
     mkdir(char(savePath_txt));
 end
@@ -229,9 +261,13 @@ if(~exist(savePath_mat,'dir'))
 end
 save_parameter = fopen(savePath_txt+"/save_parameter.txt",'w');
 fprintf(save_parameter,"\n \n");
-fprintf(save_parameter," Threenonlinear ,\r\n ini learningRate = %e ,\r\n min batch size = %d , \r\n DropPeriod = %d ,\r\n DropFactor = %f ,\r\n amp begin = %d , amp end = %d , amp step = %d \r\n data_num = %d \r\n",...
-                                      inilearningRate, miniBatchSize, LearnRateDropPeriod, LearnRateDropFactor, loop_begin, loop_end, loop_step, data_num);
-fprintf(save_parameter," validationFrequency is floor(numel(xTrain)/miniBatchSize/4) \n");
+fprintf(save_parameter," Threenonlinear ,\r\n ini learningRate = %e ,\r\n min batch size = %d , \r\n DropPeriod = %d ,\r\n DropFactor = %f ,\n ",...
+                                      inilearningRate, miniBatchSize, LearnRateDropPeriod, LearnRateDropFactor);
+fprintf(save_parameter,"train begin = %d , train end = %d , train step = %d , train data num = %d \n ", ...
+    train_begin, train_end, loop_step , trainData_num);
+fprintf(save_parameter,"test begin = %d , test end = %d , test step = %d , test data num = %d \n ", ...
+    test_begin, test_end, loop_step , testData_num);
+fprintf(save_parameter,"validationFrequency is floor(numel(xTrain)/miniBatchSize/4) \n");
 fprintf(save_parameter," H order = %d \n",h_order);
 fprintf(save_parameter," Hidden Units = %d \n",numHiddenUnits);
 fclose(save_parameter);
@@ -243,29 +279,50 @@ save_nmse_valid_name = 'save_nmse_valid';
 eval([save_nmse_valid_name,'=nmse_valid_mean;']);
 save(savePath_mat+"/save_Nmse_valid.mat",save_nmse_valid_name);
 for i = 1:test_num
-%     save_nmse_name = ['save_nmse_' num2str(i)];
-%     eval([save_nmse_name,'=nmse_mean(i);']);
     if i == 1
         save_Nmse = fopen(savePath_txt+"/save_Nmse.txt",'w');
-        save_Nmse_valid = fopen(savePath_txt+"/save_Nmse_valid.txt",'w');
-        save_bandpower = fopen(savePath_txt+"/save_bandpower.txt",'w');
-        save_amp_txt = fopen(savePath_txt+"/save_amp.txt",'w');
+        save_TestBandpower = fopen(savePath_txt+"/save_TestBandpower.txt",'w');
+        save_TestAmp = fopen(savePath_txt+"/save_TestAmp.txt",'w');
+        save_TestAmp_log = fopen(savePath_txt+"/save_TestAmp_log.txt",'w');
 %         save(savePath_mat+"/save_Nmse.mat",save_nmse_name);
     else
         save_Nmse = fopen(savePath_txt+"/save_Nmse.txt",'a');
-        save_Nmse_valid = fopen(savePath_txt+"/save_Nmse_valid.txt",'a');
-        save_bandpower = fopen(savePath_txt+"/save_bandpower.txt",'a');
-        save_amp_txt = fopen(savePath_txt+"/save_amp.txt",'a');
+        save_TestBandpower = fopen(savePath_txt+"/save_TestBandpower.txt",'a');
+        save_TestAmp = fopen(savePath_txt+"/save_TestAmp.txt",'a');
+        save_TestAmp_log = fopen(savePath_txt+"/save_TestAmp_log.txt",'a');
 %         save(savePath_mat+"/save_Nmse.mat",save_nmse_name,'-append');
     end
     fprintf(save_Nmse,"%f \n" , nmse_mean(i));
-    fprintf(save_Nmse_valid,"%f \n" , nmse_valid_mean(i));
-    fprintf(save_bandpower,"%f \n" , band_power(i));
-    fprintf(save_amp_txt,"%f \n" , save_amp(i));
+    fprintf(save_TestBandpower,"%f \n" , Test_bandpower(i));
+    fprintf(save_TestAmp,"%f \n" , save_Testamp(i));
+    fprintf(save_TestAmp_log,"%f \n" , save_Testamp_log(i));
     fclose(save_Nmse);
+    fclose(save_TestBandpower);
+    fclose(save_TestAmp);
+    fclose(save_TestAmp_log);
+end
+for i = 1:validTest_num
+    if i == 1
+        save_Nmse_valid = fopen(savePath_txt+"/save_Nmse_valid.txt",'w');
+        save_TrainBandpower = fopen(savePath_txt+"/save_TrainBandpower.txt",'w');
+        save_TrainAmp = fopen(savePath_txt+"/save_TrainAmp.txt",'w');
+        save_TrainAmp_log = fopen(savePath_txt+"/save_TrainAmp_log.txt",'w');
+%         save(savePath_mat+"/save_Nmse.mat",save_nmse_name);
+    else
+        save_Nmse_valid = fopen(savePath_txt+"/save_Nmse_valid.txt",'w');
+        save_TrainBandpower = fopen(savePath_txt+"/save_TrainBandpower.txt",'a');
+        save_TrainAmp = fopen(savePath_txt+"/save_TrainAmp.txt",'a');
+        save_TrainAmp_log = fopen(savePath_txt+"/save_TrainAmp_log.txt",'a');
+%         save(savePath_mat+"/save_Nmse.mat",save_nmse_name,'-append');
+    end
+    fprintf(save_Nmse_valid,"%f \n" , nmse_valid_mean(i));
+    fprintf(save_TrainBandpower,"%f \n" , Train_bandpower(i));
+    fprintf(save_TrainAmp,"%f \n" , save_Trainamp(i));
+    fprintf(save_TrainAmp_log,"%f \n" , save_Trainamp_log(i));
     fclose(save_Nmse_valid);
-    fclose(save_bandpower);
-    fclose(save_amp_txt);
+    fclose(save_TrainBandpower);
+    fclose(save_TrainAmp);
+    fclose(save_TrainAmp_log);
 end
 
 fprintf(" \n Threenonlinear , ini learningRate = %e , min batch size = %d , DropPeriod = %d , DropFactor = %f , data_num = %d \n",...

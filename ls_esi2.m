@@ -2,22 +2,23 @@ clear
 close all
 
 t = datetime('now');
-save_path = "data_save/light_data_3.11";
+save_path = "data_save/light_data_3.10";
 ori_rate = 10e6;
-rec_rate = 150e6;
+rec_rate = 60e6;
 rate_times = rec_rate/ori_rate;
-related_num = 5;
+related_num = 8;
+h_order = rate_times*related_num;
+data_num = 100;
 split_num = 1;
 
-loop_begin = 1;
-loop_end = 101;
-loop_step = 2;
+loop_begin = 2;
+loop_end = 26;
+loop_step = 1;
 amp_begin = 0.0015;
-amp_norm = 0.009985;
-% amp_norm = 0.03994;
+amp_norm = 0.03994;
 looptime = 0;
 bias = 0.3;
-fprintf("light_data_3.11 v1 \n");
+fprintf("light_data_3.10 v1 \n");
 for loop = loop_begin:loop_step:loop_end
 
 %% Load data
@@ -48,7 +49,6 @@ for loop = loop_begin:loop_step:loop_end
     
     band_power = bandpower(xTrain{1});
 
-    h_order = rate_times*related_num;
     h = zeros(h_order,rate_times);
 %% Reshape data
 
