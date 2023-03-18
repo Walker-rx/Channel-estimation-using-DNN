@@ -2,12 +2,15 @@ clear
 close all
 
 t = datetime('now');
-save_path = "data_save/light_data_3.10";
+folder = '3.17_2';
+save_path = "data_save/light_data_"+folder;
 ori_rate = 10e6;
 rec_rate = 60e6;
 rate_times = rec_rate/ori_rate;
 related_num = 8;
-h_order = rate_times*related_num;
+h_order = related_num*rate_times;
+% add_zero = 24;
+add_zero = h_order/2;
 data_num = 100;
 split_num = 1;
 
@@ -18,7 +21,9 @@ amp_begin = 0.0015;
 amp_norm = 0.03994;
 looptime = 0;
 bias = 0.3;
-fprintf("light_data_3.10 v1 \n");
+ver = 4;
+folder_name = "light_data_"+folder+", v"+ver;
+disp(folder_name);
 for loop = loop_begin:loop_step:loop_end
 
 %% Load data
@@ -36,7 +41,7 @@ for loop = loop_begin:loop_step:loop_end
 %%
 
     totalNum = numel(x);
-    trainNum = floor(totalNum*0.8);
+    trainNum = floor(totalNum*0.9);
     xTrain = x(1:trainNum);
     yTrain = y(1:trainNum);
     xTest = x(trainNum+1:end);
@@ -122,7 +127,7 @@ for loop = loop_begin:loop_step:loop_end
     Nmse = mean(mean(Nmse_mat));
 
 %%  Save data
-    savePath_result = save_path + "/result/"+t.Month+"."+t.Day+"/10M/rand_bias"+bias+"/norm_LS";
+    savePath_result = save_path + "/result/"+t.Month+"."+t.Day+"/10M/rand_bias"+bias+"/LS/norm_LS"+ver;
     if(~exist(savePath_result,'dir'))
         mkdir(char(savePath_result));
     end
@@ -130,9 +135,11 @@ for loop = loop_begin:loop_step:loop_end
     save_parameter = fopen(savePath_result+"/save_parameter.txt",'w');
     fprintf(save_parameter,"\n \n");
     fprintf(save_parameter," LS \r\n amp begin = %d , amp end = %d , amp step = %d \r\n data_num = %d \r\n",...
-         loop_begin, loop_end, loop_step, data_num);
+         loop_begin, loop_end, loop_step, totalNum);
+    fprintf(save_parameter," train num = %d \n",trainNum);
     fprintf(save_parameter," origin rate = %e , receive rate = %e \n",ori_rate,rec_rate);
-    fprintf(save_parameter," H order = %d \n",h_order);
+    fprintf(save_parameter," H order = %d ,related num = %d \n",h_order,related_num);
+    fprintf(save_parameter," Add zero num = %d \n",add_zero);
     fclose(save_parameter);
 
     saveH = ['save_h_' num2str(looptime)];

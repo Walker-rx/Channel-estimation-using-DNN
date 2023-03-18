@@ -42,7 +42,7 @@ for name_order = 1:data_num
     data_ori = signal_ori(pilot_length+zero_length+1:end);
     data_received = signal_received(fin_syn_point + (pilot_length+zero_length)*rate_times : end);
     for i = 1:split_num
-        x{split_num*(name_order-1)+i} = [zeros(1,15),data_ori(split_length*(i-1)+1 : split_length*i)]/upsample_norm(name_order);
+        x{split_num*(name_order-1)+i} = [zeros(1,add_zero),data_ori(split_length*(i-1)+1 : split_length*i)]/upsample_norm(name_order);
         y{split_num*(name_order-1)+i} = data_received(split_length*rate_times*(i-1)+1 : split_length*rate_times*i);
     end
 end
