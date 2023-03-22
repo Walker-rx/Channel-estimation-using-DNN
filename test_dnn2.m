@@ -38,7 +38,7 @@ fprintf("This is twononlinear network , ini learningRate = %e , DropPeriod = %d 
     load_data
 
     totalNum = data_num*10;
-    trainNum = floor(totalNum*0.8);
+    trainNum = floor(totalNum*0.7);
     xTrain1 = x(1:trainNum);
     yTrain1 = y(1:trainNum);
     xTest1 = x(trainNum+1:end);
