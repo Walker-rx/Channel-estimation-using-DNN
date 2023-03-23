@@ -29,18 +29,37 @@ inilearningRate = 1e-2;
 ver = 1;
 
 %% Loop parameter settings
-bias_begin = 0.05;
-bias_step = 0.04;
-bias_end = 0.85;
+data_type = 2;
+if data_type == 1
+    bias_begin = 0.1;
+    bias_step = 0.05;
+    bias_end = 0.8;
+    bias_loop_num = (bias_end-bias_begin)/bias_step+1;
 
-loop_begin = 1;
-loop_end = 1;
-loop_step = 1;
-loop_num = (loop_end - loop_begin)/loop_step + 1 ;
+    amp_loop_begin = 1;
+    amp_loop_end = 1;
+    amp_loop_step = 1;
+    amp_loop_num = (amp_loop_end - amp_loop_begin)/amp_loop_step + 1 ;
 
 
-amp_begin = 1;
-amp_norm = 0;
+    amp_begin = 1;
+    amp_norm = 0;
+elseif data_type == 2
+    bias_begin = 0.05;
+    bias_step = 0.04;
+    bias_end = 0.85;
+    bias_loop_num = (bias_end-bias_begin)/bias_step+1;
+
+    amp_loop_begin = 1;
+    amp_loop_end = 1;
+    amp_loop_step = 1;
+    amp_loop_num = (amp_loop_end - amp_loop_begin)/amp_loop_step + 1 ;
+
+
+    amp_begin = 0.1613;
+    amp_norm = 0;
+end
+
 
 %%
 fprintf("This is Threenonlinear network , single bias , ini learningRate = %e , min batch size = %d , DropPeriod = %d , DropFactor = %f  v%d \n",...
@@ -49,12 +68,12 @@ fprintf("This is Threenonlinear network , single bias , ini learningRate = %e , 
 for bias = bias_begin: bias_step: bias_end
     fprintf(" bias = %f \n",bias);
     test_num = 0;
-    nmse_all = zeros(1,loop_num);
-    save_amp = zeros(1,loop_num);
+    nmse_all = zeros(1,amp_loop_num);
+    save_amp = zeros(1,amp_loop_num);
 
-    for loop = loop_begin : loop_step :loop_end
+    for loop = amp_loop_begin : amp_loop_step :amp_loop_end
         test_num = test_num + 1;
-        load_path = save_path + "/data2/10M/bias"+bias+"/amp"+loop+"/mat";
+        load_path = save_path + "/data"+data_type+"/10M/bias"+bias+"/amp"+loop+"/mat";
         fprintf("load amp=%d \n",loop);
         load_data
         totalNum = data_num*split_num;
@@ -77,7 +96,7 @@ for bias = bias_begin: bias_step: bias_end
         eval([xTest_name,'=xTest_tmp;']);
         eval([yTest_name,'=yTest_tmp;']);
 
-        if loop == loop_begin
+        if loop == amp_loop_begin
             xTrain = xTrain_tmp;
             yTrain = yTrain_tmp;
         else
@@ -100,8 +119,8 @@ for bias = bias_begin: bias_step: bias_end
 
     xTrain = cellfun(@(cell1)(cell1*norm_factor),xTrain,'UniformOutput',false);
 
-    band_power = zeros(1,loop_num);
-    for i = 1:(loop_end-loop_begin)/loop_step+1
+    band_power = zeros(1,amp_loop_num);
+    for i = 1:(amp_loop_end-amp_loop_begin)/amp_loop_step+1
         band_power(i) = bandpower(xTrain{10+(i-1)*trainNum});
     end
 
@@ -217,8 +236,8 @@ for bias = bias_begin: bias_step: bias_end
     end
 
     %% Save data
-    savePath_txt = save_path + "/result2/"+t.Month+"."+t.Day+"/10M/single_bias/mix_amp/Threenonlinear"+ver;
-    savePath_mat = save_path + "/result2/"+t.Month+"."+t.Day+"/10M/single_bias/mix_amp/Threenonlinear"+ver;
+    savePath_txt = save_path + "/result"+data_type+"/"+t.Month+"."+t.Day+"/10M/single_bias/mix_amp/Threenonlinear"+ver;
+    savePath_mat = save_path + "/result"+data_type+"/"+t.Month+"."+t.Day+"/10M/single_bias/mix_amp/Threenonlinear"+ver;
     if(~exist(savePath_txt,'dir'))
         mkdir(char(savePath_txt));
     end
@@ -231,7 +250,7 @@ for bias = bias_begin: bias_step: bias_end
         fprintf(save_parameter," Threenonlinear ,\r\n ini learningRate = %e ,\r\n min batch size = %d , \r\n " ...
             ,inilearningRate, miniBatchSize);
         fprintf(save_parameter,"DropPeriod = %d , DropFactor = %f ,\r\n ",LearnRateDropPeriod, LearnRateDropFactor);
-        fprintf(save_parameter,"amp begin = %d , amp end = %d , amp step = %d \r\n ",loop_begin, loop_end, loop_step);
+        fprintf(save_parameter,"amp begin = %d , amp end = %d , amp step = %d \r\n ",amp_loop_begin, amp_loop_end, amp_loop_step);
         fprintf(save_parameter,"data_num = %d , split num = %d , train num = %d\r\n",data_num,split_num,trainNum);
         fprintf(save_parameter," validationFrequency is floor(numel(xTrain)/miniBatchSize) \n");
         fprintf(save_parameter," origin rate = %e , receive rate = %e \n",ori_rate,rec_rate);

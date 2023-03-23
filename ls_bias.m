@@ -14,17 +14,35 @@ data_num = 100;
 split_num = 1;
 
 %% Loop parameter settings
-bias_begin = 0.05;
-bias_step = 0.04;
-bias_end = 0.85;
+data_type = 2;
+if data_type == 1
+    bias_begin = 0.1;
+    bias_step = 0.05;
+    bias_end = 0.8;
 
-loop_begin = 1;
-loop_end = 1;
-loop_step = 1;
-loop_num = (loop_end-loop_begin)/loop_step+1;
+    amp_loop_begin = 1;
+    amp_loop_end = 1;
+    amp_loop_step = 1;
+    amp_loop_num = (amp_loop_end - amp_loop_begin)/amp_loop_step + 1 ;
 
-amp_begin = 1;
-amp_norm = 0;
+
+    amp_begin = 1;
+    amp_norm = 0;
+elseif data_type == 2
+    bias_begin = 0.05;
+    bias_step = 0.04;
+    bias_end = 0.85;
+
+    amp_loop_begin = 1;
+    amp_loop_end = 1;
+    amp_loop_step = 1;
+    amp_loop_num = (amp_loop_end - amp_loop_begin)/amp_loop_step + 1 ;
+
+
+    amp_begin = 0.1613;
+    amp_norm = 0;
+end
+
 looptime = 0;
 ver = 1;
 
@@ -33,11 +51,11 @@ disp(folder_name);
 
 %%
 for bias = bias_begin : bias_step :bias_end
-    save_amp = zeros(1,loop_num);
-    for loop = loop_begin:loop_step:loop_end
+    save_amp = zeros(1,amp_loop_num);
+    for loop = amp_loop_begin:amp_loop_step:amp_loop_end
         %% Load data
         looptime = looptime + 1;
-        load_path = save_path + "/data2/10M/bias"+bias+"/amp"+loop+"/mat";
+        load_path = save_path + "/data"+data_type+"/10M/bias"+bias+"/amp"+loop+"/mat";
         load_data
         %% Normalize data
         %     x = cellfun(@(cell1)(cell1*100*1.1^amp),x,'UniformOutput',false);
@@ -110,7 +128,7 @@ for bias = bias_begin : bias_step :bias_end
         Nmse = mean(mean(Nmse_mat));
     end
         %%  Save data
-        savePath_result = save_path + "/result2/"+t.Month+"."+t.Day+"/10M/LS/norm_LS"+ver;
+        savePath_result = save_path + "/result"+data_type+"/"+t.Month+"."+t.Day+"/10M/LS/norm_LS"+ver;
         if(~exist(savePath_result,'dir'))
             mkdir(char(savePath_result));
         end
@@ -140,7 +158,7 @@ end
 save_parameter = fopen(savePath_result+"/save_parameter.txt",'w');
 fprintf(save_parameter,"\n \n");
 fprintf(save_parameter," LS \r\n amp begin = %d , amp end = %d , amp step = %d \r\n ",...
-    loop_begin, loop_end, loop_step);
+    amp_loop_begin, amp_loop_end, amp_loop_step);
 fprintf(save_parameter,"data_num = %d , split num = %d , train num = %d\r\n",data_num,split_num,trainNum);
 fprintf(save_parameter," origin rate = %e , receive rate = %e \n",ori_rate,rec_rate);
 fprintf(save_parameter," H order = %d ,related num = %d \n",h_order,related_num);
