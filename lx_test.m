@@ -73,7 +73,8 @@ for bias = bias_begin: bias_step: bias_end
 
     for loop = amp_loop_begin : amp_loop_step :amp_loop_end
         test_num = test_num + 1;
-        load_path = save_path + "/data"+data_type+"/10M/bias"+bias+"/amp"+loop+"/mat";
+%         load_path = save_path + "/data"+data_type+"/10M/bias"+bias+"/amp"+loop+"/mat";
+        load_path = save_path + "/data"+"/10M/amp1/bias"+bias+"/mat";
         fprintf("load amp=%d \n",loop);
         load_data
         totalNum = data_num*split_num;
@@ -203,19 +204,7 @@ for bias = bias_begin: bias_step: bias_end
         eval([yValid_i ,'= yTrain_reshape(:,i);']);
     end
 
-    %%%%%%%%%
-    load('network.mat');
-    layers = net.Layers;
-%     layers(2).Weights = net.Layers(2).Weights;
-%     layers(2).Bias = net.Layers(2).Bias;
-%     layers(4).Weights = net.Layers(4).Weights;
-%     layers(4).Bias = net.Layers(4).Bias;
-%     layers(6).Weights = net.Layers(6).Weights;
-%     layers(6).Bias = net.Layers(6).Bias;
-    
-    %%%%%%%%%
     for i = 1:looptime
-        if i>1
         net = trainNetwork(xTrain,yTrain,layers,options);
         h = net.Layers(2).Weights.';
         for j = 1:test_num

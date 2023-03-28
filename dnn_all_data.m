@@ -4,7 +4,7 @@ close all
 t = datetime('now');
 folder = '3.22';
 save_path = "data_save/light_data_"+folder;
-ver = 1;
+ver = 2;
 savePath_txt = save_path + "/result4/"+t.Month+"."+t.Day+"/mix_bias_amp/Threenonlinear"+ver;   
 savePath_mat = save_path + "/result4/"+t.Month+"."+t.Day+"/mix_bias_amp/Threenonlinear"+ver; 
 if(~exist(savePath_txt,'dir'))
@@ -41,7 +41,7 @@ fprintf("This is Threenonlinear network , ini learningRate = %e , min batch size
 fprintf("Hidden Units = %d , v%d \n",numHiddenUnits,ver)
 
 bias_scope = 0.05:0.04:0.85;
-amp_scope_ini = [0.1613 1];
+amp_scope_ini = [0.1613 0.1613];
 dataset_order = cell(1,length(amp_scope_ini));
 amp_data = zeros(1,2);
 bias_data = cell(1,2);
@@ -180,11 +180,13 @@ while ~isempty(amp_scope)
                 end
                 
                 for i =1:test_num
-                    clear eval(['xTest',num2str(i)]) eval(['yTest',num2str(i)]) ...
-                        eval(['xValid',num2str(i)]) eval(['yValid',num2str(i)])
+                    eval(['clear xTest',num2str(i)])
+                    eval(['clear yTest',num2str(i)])
+                    eval(['clear xValid',num2str(i)])
+                    eval(['clear yValid',num2str(i)])    
                 end
                 clear xTrain yTrain
-
+                pause(10)
             else
                 net_path = savePath_mat+"/net/net"+train_time;
                 if(~exist(net_path,'dir'))
@@ -232,11 +234,13 @@ while ~isempty(amp_scope)
                 end
                 
                 for i =1:test_num
-                    clear eval(['xTest',num2str(i)]) eval(['yTest',num2str(i)]) ...
-                        eval(['xValid',num2str(i)]) eval(['yValid',num2str(i)])
+                    eval(['clear xTest',num2str(i)])
+                    eval(['clear yTest',num2str(i)])
+                    eval(['clear xValid',num2str(i)])
+                    eval(['clear yValid',num2str(i)])    
                 end
                 clear xTrain yTrain
-
+                pause(10)
             end
         end
     end
