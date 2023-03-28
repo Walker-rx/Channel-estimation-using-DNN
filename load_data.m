@@ -41,9 +41,9 @@ for name_order = 1:data_num
     upsample_norm(name_order) = gather(eval(strcat('upsample_norm_mat.',upsample_norm_names{name_order})));
     data_ori = signal_ori(pilot_length+zero_length+1:end);
     data_received = signal_received(fin_syn_point + (pilot_length+zero_length)*rate_times : end);
-    for i = 1:split_num
-        x{split_num*(name_order-1)+i} = [zeros(1,add_zero),data_ori(split_length*(i-1)+1 : split_length*i)]/upsample_norm(name_order);
-        y{split_num*(name_order-1)+i} = data_received(split_length*rate_times*(i-1)+1 : split_length*rate_times*i);
+    for i_for_load = 1:split_num
+        x{split_num*(name_order-1)+i_for_load} = [zeros(1,add_zero),data_ori(split_length*(i_for_load-1)+1 : split_length*i_for_load)]/upsample_norm(name_order);
+        y{split_num*(name_order-1)+i_for_load} = data_received(split_length*rate_times*(i_for_load-1)+1 : split_length*rate_times*i_for_load);
     end
 end
 x = gather(x);

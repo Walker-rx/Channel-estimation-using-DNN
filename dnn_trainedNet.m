@@ -212,7 +212,7 @@ for bias = bias_begin : bias_step :bias_end
 end
 
 %% Test performance with trained networks
-looptime = 2;
+looptime = 1;
 load(net_path+"/net.mat");
 for i = 1:test_num
     eval([['nmse',num2str(i),'_mat'],'= zeros(1,looptime);']);
@@ -229,6 +229,14 @@ for i = 1:looptime
         nmseNum = cellfun(@(hat,exp)10*log10(sum(sum((hat-exp).^2))/sum(sum(exp.^2))),y_hatT,y_fortest);
         nmse_loop = mean(nmseNum);
         eval([['nmse',num2str(j),'_mat(',num2str(i),')'],'=nmse_loop;']);
+
+        figure
+        plot(y_fortest{6}(6,10:35))
+        hold 
+        plot(y_hatT{6}(6,10:35))
+        pause(6)
+        close all
+       
     end       
     fprintf("already predicting %d times \n",i);
 end
