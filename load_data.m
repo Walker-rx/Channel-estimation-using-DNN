@@ -34,16 +34,18 @@ data_length = 10000;
 split_length = data_length/split_num;
 % x = cell(data_num,1);
 % y = cell(data_num,1);
-for name_order = 1:data_num  
+load_data_loop = 0;
+for name_order = load_begin:load_end
+    load_data_loop = load_data_loop+1;
     signal_ori = gather(eval(strcat('x_mat.',x_names{name_order})));
     signal_received = gather(eval(strcat('y_mat.',y_names{name_order})));
     fin_syn_point = gather(eval(strcat('fin_mat.',fin_names{name_order})));
-    upsample_norm(name_order) = gather(eval(strcat('upsample_norm_mat.',upsample_norm_names{name_order})));
+    upsample_norm(load_data_loop) = gather(eval(strcat('upsample_norm_mat.',upsample_norm_names{name_order})));
     data_ori = signal_ori(pilot_length+zero_length+1:end);
     data_received = signal_received(fin_syn_point + (pilot_length+zero_length)*rate_times : end);
     for i_for_load = 1:split_num
-        x{split_num*(name_order-1)+i_for_load} = [zeros(1,add_zero),data_ori(split_length*(i_for_load-1)+1 : split_length*i_for_load)]/upsample_norm(name_order);
-        y{split_num*(name_order-1)+i_for_load} = data_received(split_length*rate_times*(i_for_load-1)+1 : split_length*rate_times*i_for_load);
+        x{split_num*(load_data_loop-1)+i_for_load} = [zeros(1,add_zero),data_ori(split_length*(i_for_load-1)+1 : split_length*i_for_load)]/upsample_norm(load_data_loop);
+        y{split_num*(load_data_loop-1)+i_for_load} = data_received(split_length*rate_times*(i_for_load-1)+1 : split_length*rate_times*i_for_load);
     end
 end
 x = gather(x);

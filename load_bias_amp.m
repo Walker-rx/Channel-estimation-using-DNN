@@ -22,7 +22,7 @@ for i = 1:length(amp_loop_data)
             fprintf(" %d training times , amp = %f , bias = %d \n",train_time,amp_folder,bias_folder);
             load_data
             totalNum = data_num*split_num;
-            trainNum = floor(totalNum*0.95);
+            trainNum = floor(totalNum*train_percent);
             xTrain_tmp = x(1:trainNum);
             yTrain_tmp = y(1:trainNum);
             xTest_tmp = x(trainNum+1:end);

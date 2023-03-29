@@ -14,7 +14,9 @@ related_num = 8;
 h_order = rate_times*related_num;
 add_zero = h_order/2;
 
-data_num = 100;
+load_begin = 1;
+load_begin = 100;
+data_num = load_end-load_begin+1;
 split_num = 10;  % Cut a signal into split_num shares
 
 inputSize = h_order;

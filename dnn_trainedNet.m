@@ -26,8 +26,8 @@ ver = 1;
 
 %% Loop parameter settings
 data_type = 1;
-net_type = 1;
-if data_type == 1
+net_type = [1,1];
+if data_type == 1   
     bias_begin = 0.05;
     bias_step = 0.04;
     bias_end = 0.85;
@@ -43,13 +43,15 @@ if data_type == 1
     amp_begin = amp;
     amp_norm = 0;
 
-    data_num = 200;
-    train_percent = 0.5;
+    load_begin = 201;
+    load_end = 300;
+    data_num = load_end-load_begin+1;
+    train_percent = 0.05;
 
     folder = '3.22';
     save_path = "data_save/light_data_"+folder;
     data_path = save_path + "/data/10M/amp"+amp;
-    net_path = save_path + "/result4/3.27/mix_bias_amp/Threenonlinear1/net/net"+net_type;
+    net_path = save_path + "/result4/3.27/mix_bias_amp/Threenonlinear"+net_type(1)+"/net/net"+net_type(2);
     savePath_txt = save_path + "/result3/"+t.Month+"."+t.Day+"/trainedNet/v"+ver;
     savePath_mat = save_path + "/result3/"+t.Month+"."+t.Day+"/trainedNet/v"+ver;
 elseif data_type == 2
@@ -68,13 +70,15 @@ elseif data_type == 2
     amp_begin = amp;
     amp_norm = 0;
 
-    data_num = 200;
-    train_percent = 0.5;
+    load_begin = 201;
+    load_end = 300;
+    data_num = load_end-load_begin+1;
+    train_percent = 0.05;
 
     folder = '3.22';
     save_path = "data_save/light_data_"+folder;
     data_path = save_path + "/data/10M/amp"+amp;
-    net_path = save_path + "/result4/3.27/mix_bias_amp/Threenonlinear1/net/net"+net_type;
+    net_path = save_path + "/result4/3.27/mix_bias_amp/Threenonlinear"+net_type(1)+"/net/net"+net_type(2);
     savePath_txt = save_path + "/result3/"+t.Month+"."+t.Day+"/trainedNet/v"+ver;
     savePath_mat = save_path + "/result3/"+t.Month+"."+t.Day+"/trainedNet/v"+ver;
 elseif data_type == 3
