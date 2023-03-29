@@ -5,7 +5,7 @@ t = datetime('now');
 folder = '3.22';
 save_path = "data_save/light_data_"+folder;
 
-ver = 3;
+ver = 1;
 
 savePath_txt = save_path + "/result4/"+t.Month+"."+t.Day+"/mix_bias_amp/Threenonlinear"+ver;   
 savePath_mat = save_path + "/result4/"+t.Month+"."+t.Day+"/mix_bias_amp/Threenonlinear"+ver; 
@@ -42,8 +42,9 @@ fprintf("This is Threenonlinear network , ini learningRate = %e , min batch size
 fprintf("Hidden Units = %d , v%d \n",numHiddenUnits,ver)
 
 bias_scope = 0.05:0.04:0.85;
-amp_scope_ini = [1 1];
+amp_scope_ini = [0.1613 0.1613];
 data_scope = {[1 80] [81 160] [161 200]};
+% data_scope = {[1 100]};
 train_percent = 0.95;
 total_data_num = 0;
 
@@ -63,6 +64,7 @@ while ~isempty(amp_scope)
     while length(bias_scope_tmp) >= 13
 
         data = cell(1,2);
+%         data = cell(1,1);
         if  length(bias_scope_tmp) >=13 || length(bias_scope_tmp) <=21
             bias_order = randperm(length(bias_scope_tmp),floor(length(bias_scope_tmp)/2));
             bias_data{1} = bias_scope_tmp(bias_order);
@@ -293,6 +295,7 @@ fclose(save_parameter);
 fprintf("\n Training end ..." + ...
     "\n Threenonlinear , ini learningRate = %e , min batch size = %d , DropPeriod = %d , DropFactor = %f , data_num = %d \n",...
     inilearningRate, miniBatchSize, LearnRateDropPeriod, LearnRateDropFactor, data_num);
+fprintf(" result saved in %s \n",savePath_mat);
 
 
     

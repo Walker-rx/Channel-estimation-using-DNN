@@ -146,7 +146,7 @@ fprintf(save_parameter," Threenonlinear ,\r\n ini learningRate = %e ,\r\n min ba
 fprintf(save_parameter,"DropPeriod = %d , DropFactor = %f ,\r\n ",LearnRateDropPeriod, LearnRateDropFactor);
 fprintf(save_parameter,"amp begin = %d , amp end = %d , amp step = %d \r\n ",amp_loop_begin, amp_loop_end, amp_loop_step);
 fprintf(save_parameter,"data_num = %d , split num = %d , train num = %d\r\n",data_num,split_num,trainNum*2);
-fprintf(save_parameter," validationFrequency is floor(numel(xTrain)/miniBatchSize/4) \n");
+fprintf(save_parameter," validationFrequency is floor(numel(xTrain)/miniBatchSize/2) \n");
 fprintf(save_parameter," origin rate = %e , receive rate = %e \n",ori_rate,rec_rate);
 fprintf(save_parameter," H order = %d ,related num = %d \n",h_order,related_num);
 fprintf(save_parameter," Hidden Units = %d \n",numHiddenUnits);

@@ -22,11 +22,12 @@ LearnRateDropPeriod = 8;
 LearnRateDropFactor = 0.1;
 inilearningRate = 1e-2;
 
-ver = 1;
+ver = 12;
 
 %% Loop parameter settings
-data_type = 1;
-net_type = [1,1];
+data_type = 2;
+net_type = [3,6];
+net_folder = 3.28;
 if data_type == 1   
     bias_begin = 0.05;
     bias_step = 0.04;
@@ -51,7 +52,7 @@ if data_type == 1
     folder = '3.22';
     save_path = "data_save/light_data_"+folder;
     data_path = save_path + "/data/10M/amp"+amp;
-    net_path = save_path + "/result4/3.27/mix_bias_amp/Threenonlinear"+net_type(1)+"/net/net"+net_type(2);
+    net_path = save_path + "/result4/"+net_folder+"/mix_bias_amp/Threenonlinear"+net_type(1)+"/net/net"+net_type(2);
     savePath_txt = save_path + "/result3/"+t.Month+"."+t.Day+"/trainedNet/v"+ver;
     savePath_mat = save_path + "/result3/"+t.Month+"."+t.Day+"/trainedNet/v"+ver;
 elseif data_type == 2
@@ -78,7 +79,7 @@ elseif data_type == 2
     folder = '3.22';
     save_path = "data_save/light_data_"+folder;
     data_path = save_path + "/data/10M/amp"+amp;
-    net_path = save_path + "/result4/3.27/mix_bias_amp/Threenonlinear"+net_type(1)+"/net/net"+net_type(2);
+    net_path = save_path + "/result4/"+net_folder+"/mix_bias_amp/Threenonlinear"+net_type(1)+"/net/net"+net_type(2);
     savePath_txt = save_path + "/result3/"+t.Month+"."+t.Day+"/trainedNet/v"+ver;
     savePath_mat = save_path + "/result3/"+t.Month+"."+t.Day+"/trainedNet/v"+ver;
 elseif data_type == 3
@@ -102,7 +103,7 @@ elseif data_type == 3
     save_path = "data_save/light_data_"+folder;
     load_path_tmp = save_path + "/data";
     data_path = save_path + "/data/10M";
-    net_path = "data_save/light_data_3.22/result4/3.27/mix_bias_amp/Threenonlinear1/net"+net_type;
+    net_path = "data_save/light_data_3.22/result4/"+net_folder+"/mix_bias_amp/Threenonlinear1/net"+net_type;
     savePath_txt = "data_save/light_data_3.22/result3/"+t.Month+"."+t.Day+"/10M/trainedNet/v"+ver;
     savePath_mat = "data_save/light_data_3.22/result3/"+t.Month+"."+t.Day+"/10M/trainedNet/v"+ver;
 end
@@ -150,6 +151,7 @@ for loop = amp_loop_begin : amp_loop_step :amp_loop_end
         clear x y
     end   
 end
+
 %%  Normalize data
 totaltrain = numel(xTrain);
 % norm_cell = xTrain{floor(totaltrain/2)};
@@ -185,7 +187,7 @@ for i = 1:test_num
     ytop_tem = eval(['yTest_',num2str(i)]);
     for j = 1:numel(xtop_tem)
         xtop_tem{j} = toeplitz(xtop_tem{j}(h_order:-1:1),xtop_tem{j}(h_order:end));
-        xtop_tem{j} = [xtop_tem{j}; bias_scope( floor((i-1)/trainNum)+1 )*ones(1,size(xtop_tem{j},2) )];
+        xtop_tem{j} = [xtop_tem{j}; bias_scope( i )*ones(1,size(xtop_tem{j},2) )];
         ytop_tem{j} = reshape(ytop_tem{j}(1:split_length*rate_times),outputSize,split_length);
         ytop_tem{j} = ytop_tem{j}(:,1:size(xtop_tem{j},2));
     end
