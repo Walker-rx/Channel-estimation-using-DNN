@@ -19,7 +19,7 @@ for i = 1:length(amp_loop_data)
         if bias_folder ~=0
             test_num = test_num + 1;
             load_path = save_path + "/data/10M/amp"+amp_folder+"/bias"+bias_folder+"/mat";
-            fprintf(" %d training times , amp = %f , bias = %d \n",train_time,amp_folder,bias_folder);
+            fprintf(" %d looptimes , %d training times , load amp = %f , bias = %d \n",train_loop_time,train_time,amp_folder,bias_folder);
             load_data
             totalNum = data_num*split_num;
             trainNum = floor(totalNum*train_percent);
