@@ -5,9 +5,9 @@ t = datetime('now');
 folder = '4.1';
 save_path = "data_save/light_data_"+folder;
 
-ver = 1;
-savePath_txt = save_path + "/result1/"+t.Month+"."+t.Day+"/mix_bias_amp/Threenonlinear"+ver;   
-savePath_mat = save_path + "/result1/"+t.Month+"."+t.Day+"/mix_bias_amp/Threenonlinear"+ver; 
+ver = 2;
+savePath_txt = save_path + "/result3/"+t.Month+"."+t.Day+"/mix_bias_amp/Threenonlinear"+ver;   
+savePath_mat = save_path + "/result3/"+t.Month+"."+t.Day+"/mix_bias_amp/Threenonlinear"+ver; 
 if(~exist(savePath_txt,'dir'))
     mkdir(char(savePath_txt));
 end
@@ -45,7 +45,8 @@ fprintf("This is Threenonlinear network , ini learningRate = %e , min batch size
 fprintf("Hidden Units = %d , v%d \n",numHiddenUnits,ver)
 
 bias_scope = 0.05:0.04:0.85;
-amp_scope_ini = [0.1613 0.32106 0.48082 0.64058 0.8003 1];
+amp_scope_ini = [0.48082 0.48082 0.48082 0.48082];
+% amp_scope_ini = [0.1613 0.32106 0.48082 0.64058 0.8003 1];
 data_scope = {[1 50] [51 100] [101 150] [151 200] [201 250] [251 300]};
 % data_scope = { [1 40] [41 80] [81 120] [121 160] [161 200] [201 240] [241 280] [281 300] };
 % data_scope = { [1 30] [31 60] [61 90] [91 120] [121 150] [151 180] [181 210] [211 240] [241 270] [271 300] };
@@ -53,7 +54,7 @@ data_scope = {[1 50] [51 100] [101 150] [151 200] [201 250] [251 300]};
 train_percent = 0.95;
 loop_train_num = round(length(amp_scope_ini)/2)*2*numel(data_scope);
 
-total_loop_time = 3;
+total_loop_time = 1;
 for train_loop_time = 1:total_loop_time
     dataset_order = cell(1,length(amp_scope_ini));
     amp_data = zeros(1,2);
@@ -61,6 +62,7 @@ for train_loop_time = 1:total_loop_time
     train_time = 0;
     total_data_num = 0;
     amp_scope = amp_scope_ini;
+    total_loss = [];
     while ~isempty(amp_scope)
 
         amp_order = randperm(length(amp_scope),2);
@@ -134,6 +136,7 @@ for train_loop_time = 1:total_loop_time
                     end
 
                     ite = 0;
+                    
                     for epoch = 1:maxEpochs
                         idx = randperm(numOber);
                         xTrain = xTrain(:,idx);
@@ -166,6 +169,7 @@ for train_loop_time = 1:total_loop_time
                             learnRate = learnRate*LearnRateDropFactor;                            
                         end                       
                     end
+                    total_loss(:,train_time) = losss.';
                     save(net_path+"/net.mat",'dlnet');  % Save the trained network
 
 
@@ -218,6 +222,10 @@ for train_loop_time = 1:total_loop_time
                         end
 %                         fclose(save_Nmse_valid);
                         fclose(save_amp_bias_txt);
+                    end
+
+                    if train_time == loop_train_num
+                        save(savePath_mat+"/net/looptime"+train_loop_time+"/loss.mat","total_loss");  % Save the trained network
                     end
 
                     for i =1:test_num

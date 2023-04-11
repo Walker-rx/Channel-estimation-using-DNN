@@ -2,7 +2,7 @@ clear
 close all
 
 t = datetime('now');
-folder = '3.22';
+folder = '4.1';
 save_path = "data_save/light_data_"+folder;
 
 %% Network parameters
