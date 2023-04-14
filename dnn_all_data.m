@@ -5,9 +5,9 @@ t = datetime('now');
 folder = '4.1';
 save_path = "data_save/light_data_"+folder;
 
-ver = 2;
-savePath_txt = save_path + "/result3/"+t.Month+"."+t.Day+"/mix_bias_amp/Threenonlinear"+ver;   
-savePath_mat = save_path + "/result3/"+t.Month+"."+t.Day+"/mix_bias_amp/Threenonlinear"+ver; 
+ver = 1;
+savePath_txt = save_path + "/result1/"+t.Month+"."+t.Day+"/mix_bias_amp/Threenonlinear"+ver;   
+savePath_mat = save_path + "/result1/"+t.Month+"."+t.Day+"/mix_bias_amp/Threenonlinear"+ver; 
 if(~exist(savePath_txt,'dir'))
     mkdir(char(savePath_txt));
 end
@@ -30,14 +30,12 @@ numHiddenUnits = 60;
 outputSize = rate_times;  % y=h*x+n;  y:(outputSize,m) h:(outputSize,inputSize) x:(inputSize,m)
 maxEpochs = 50;
 miniBatchSize = 80000;
-LearnRateDropPeriod = 8;
+LearnRateDropPeriod = 12;
 LearnRateDropFactor = 0.1;
 inilearningRate = 1e-2;
 velocity = [];
 momentum = 0.9;
-losss = [];
 ite = 0;
-learnRate = inilearningRate;
 
 %%
 fprintf("This is Threenonlinear network , ini learningRate = %e , min batch size = %d , DropPeriod = %d , DropFactor = %f \n",...
@@ -45,8 +43,8 @@ fprintf("This is Threenonlinear network , ini learningRate = %e , min batch size
 fprintf("Hidden Units = %d , v%d \n",numHiddenUnits,ver)
 
 bias_scope = 0.05:0.04:0.85;
-amp_scope_ini = [0.48082 0.48082 0.48082 0.48082];
-% amp_scope_ini = [0.1613 0.32106 0.48082 0.64058 0.8003 1];
+% amp_scope_ini = [0.48082 0.48082 0.48082 0.48082];
+amp_scope_ini = [0.1613 0.32106 0.48082 0.64058 0.8003 1];
 data_scope = {[1 50] [51 100] [101 150] [151 200] [201 250] [251 300]};
 % data_scope = { [1 40] [41 80] [81 120] [121 160] [161 200] [201 240] [241 280] [281 300] };
 % data_scope = { [1 30] [31 60] [61 90] [91 120] [121 150] [151 180] [181 210] [211 240] [241 270] [271 300] };
@@ -63,6 +61,7 @@ for train_loop_time = 1:total_loop_time
     total_data_num = 0;
     amp_scope = amp_scope_ini;
     total_loss = [];
+    total_learnRate = [];
     while ~isempty(amp_scope)
 
         amp_order = randperm(length(amp_scope),2);
@@ -136,7 +135,9 @@ for train_loop_time = 1:total_loop_time
                     end
 
                     ite = 0;
-                    
+                    learnRate = inilearningRate;
+                    losss = [];
+                    learnRate_save = [];
                     for epoch = 1:maxEpochs
                         idx = randperm(numOber);
                         xTrain = xTrain(:,idx);
@@ -158,9 +159,10 @@ for train_loop_time = 1:total_loop_time
                             [dlnet, velocity] = sgdmupdate(dlnet,gradients,velocity,learnRate,momentum);
 
                             losss(ite) = extractdata(loss);
+                            learnRate_save(ite) = learnRate;
                             if mod(ite,80) == 0
-                                fprintf(" looptime = %d , training times = %d , epoches = %d , iteration = %d , loss = %e \n",...
-                                    train_loop_time,train_time,epoch,ite,losss(ite));
+                                fprintf(" looptime = %d , training times = %d , epoches = %d , iteration = %d , loss = %e , learnRate = %e \n",...
+                                    train_loop_time,train_time,epoch,ite,losss(ite),learnRate);
                             end
                             clear X Y dlX dlY
                         end
@@ -170,6 +172,7 @@ for train_loop_time = 1:total_loop_time
                         end                       
                     end
                     total_loss(:,train_time) = losss.';
+                    total_learnRate(:,train_time) = learnRate_save.';
                     save(net_path+"/net.mat",'dlnet');  % Save the trained network
 
 
@@ -225,7 +228,8 @@ for train_loop_time = 1:total_loop_time
                     end
 
                     if train_time == loop_train_num
-                        save(savePath_mat+"/net/looptime"+train_loop_time+"/loss.mat","total_loss");  % Save the trained network
+                        save(savePath_mat+"/net/looptime"+train_loop_time+"/loss.mat","total_loss");  
+                        save(savePath_mat+"/net/looptime"+train_loop_time+"/learnRate.mat","total_learnRate");
                     end
 
                     for i =1:test_num

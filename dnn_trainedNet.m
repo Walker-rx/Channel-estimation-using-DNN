@@ -21,13 +21,14 @@ miniBatchSize = 400;
 LearnRateDropPeriod = 8;
 LearnRateDropFactor = 0.1;
 inilearningRate = 1e-2;
-ver = 1;
+% ver = 1;
 
 %% Loop parameter settings
-
+total_ver = 50;
+for ver = 1:total_ver
 amp = 0.48082;
-net_type = [1,1,1];
-net_folder = 4.11;
+net_type = [1,1,ver];
+net_folder = 4.14;
 
 bias_begin = 0.05;
 bias_step = 0.04;
@@ -43,17 +44,17 @@ amp_loop_num = (amp_loop_end - amp_loop_begin)/amp_loop_step + 1 ;
 amp_begin = amp;
 amp_norm = 0;
 
-load_begin = 301;
-load_end = 350;
+load_begin = 251;
+load_end = 300;
 data_num = load_end-load_begin+1;
 train_percent = 0.05;
 
-folder = '4.7';
+folder = '4.1';
 save_path = "data_save/light_data_"+folder;
 data_path = save_path + "/data/10M/amp"+amp;
 net_path = save_path + "/result1/"+net_folder+"/mix_bias_amp/Threenonlinear"+net_type(1)+"/net/looptime"+net_type(2)+"/net"+net_type(3);
-savePath_txt = save_path + "/result2/"+t.Month+"."+t.Day+"/trainedNet/v"+ver;
-savePath_mat = save_path + "/result2/"+t.Month+"."+t.Day+"/trainedNet/v"+ver;
+savePath_txt = save_path + "/result2/"+t.Month+"."+t.Day+"/trainedNet/amp0.48082/v"+ver;
+savePath_mat = save_path + "/result2/"+t.Month+"."+t.Day+"/trainedNet/amp0.48082/v"+ver;
 
 
 %% Load data
@@ -146,6 +147,7 @@ end
 %% Test performance with trained networks
 looptime = 2;
 load(net_path+"/net.mat");
+fprintf(" load net = %s \n",net_path);
 for i = 1:test_num
     eval([['nmse',num2str(i),'_mat'],'= zeros(1,looptime);']);
 end
@@ -155,45 +157,46 @@ for i = 1:looptime
         x_fortest = eval(['xTest_',num2str(j)]);
         y_fortest = eval(['yTest_',num2str(j)]);
 %%
-%         x_fortest = cell2mat(x_fortest);
-%         y_fortest = cell2mat(y_fortest);
-% 
-%         x_fortest(:,:,1) = x_fortest;
-%         y_fortest(:,:,1) = y_fortest;
-%         x_fortest = dlarray(single(x_fortest),'CBT');
-%         y_fortest = dlarray(single(y_fortest),'CBT');
-%         x_fortest = gpuArray(x_fortest);
-%         y_fortest = gpuArray(y_fortest);
-%         miniBatchSize = dlarray(miniBatchSize);
-% 
-%         y_hat = predict(dlnet,x_fortest);
-% 
-%         y_fortest = extractdata(y_fortest);
-%         y_hat = extractdata(y_hat);
-%         y_fortest = gather(y_fortest);
-%         y_hat = gather(y_hat);
-%         y_fortest = double(y_fortest);
-%         y_hat = double(y_hat);
-%         y_hatT = y_hat;
-%         nmseNum_fun = @(hat,exp)10*log10(sum(sum((hat-exp).^2))/sum(sum(exp.^2)));
-%         nmseNum = nmseNum_fun(y_hatT,y_fortest);
+        x_fortest = cell2mat(x_fortest);
+        y_fortest = cell2mat(y_fortest);
+
+        x_fortest(:,:,1) = x_fortest;
+        y_fortest(:,:,1) = y_fortest;
+        x_fortest = dlarray(single(x_fortest),'CBT');
+        y_fortest = dlarray(single(y_fortest),'CBT');
+        x_fortest = gpuArray(x_fortest);
+        y_fortest = gpuArray(y_fortest);
+        miniBatchSize = dlarray(miniBatchSize);
+
+        y_hat = predict(dlnet,x_fortest);
+
+        y_fortest = extractdata(y_fortest);
+        y_hat = extractdata(y_hat);
+        y_fortest = gather(y_fortest);
+        y_hat = gather(y_hat);
+        y_fortest = double(y_fortest);
+        y_hat = double(y_hat);
+        y_hatT = y_hat;
+        nmseNum_fun = @(hat,exp)10*log10(sum(sum((hat-exp).^2))/sum(sum(exp.^2)));
+        nmseNum = nmseNum_fun(y_hatT,y_fortest);
 %%
 
-        y_hat = predict(net,x_fortest,'MiniBatchSize',miniBatchSize);
-        y_hatT = y_hat.';
+%         y_hat = predict(net,x_fortest,'MiniBatchSize',miniBatchSize);
+%         y_hatT = y_hat.';
+%         nmseNum = cellfun(@(hat,exp)10*log10(sum(sum((hat-exp).^2))/sum(sum(exp.^2))),y_hatT,y_fortest);
 
-        nmseNum = cellfun(@(hat,exp)10*log10(sum(sum((hat-exp).^2))/sum(sum(exp.^2))),y_hatT,y_fortest);
         nmse_loop = mean(nmseNum);
         eval([['nmse',num2str(j),'_mat(',num2str(i),')'],'=nmse_loop;']);
 
-        figure
-        plot(y_fortest{6}(6,10:35))
-        hold 
-        plot(y_hatT{6}(6,10:35))
+%         figure
+%         plot(y_fortest{6}(6,10:35))
+%         hold 
+%         plot(y_hatT{6}(6,10:35))
 %         figure
 %         plot(y_fortest(6,10:35))
 %         hold 
 %         plot(y_hatT(6,10:35))
+        fprintf(" net = v%d/%d, looptime = %d/%d , test num = %d/%d \n",ver,total_ver,i,looptime,j,test_num);
         pause(3)
         close all       
     end       
@@ -249,5 +252,5 @@ for i = 1:amp_loop_num
 end
 
 fprintf(" result saved in %s \n",savePath_mat);
-
+end
     
