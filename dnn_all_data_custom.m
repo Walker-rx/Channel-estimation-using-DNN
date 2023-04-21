@@ -5,7 +5,8 @@ t = datetime('now');
 folder = '4.14';
 save_path = "data_save/light_data_"+folder;
 
-ver = 1;
+ver = 50;
+
 savePath_txt = save_path + "/result1/"+t.Month+"."+t.Day+"/mix_bias_amp/Threenonlinear"+ver;   
 savePath_mat = save_path + "/result1/"+t.Month+"."+t.Day+"/mix_bias_amp/Threenonlinear"+ver; 
 if(~exist(savePath_txt,'dir'))
@@ -16,241 +17,202 @@ if(~exist(savePath_mat,'dir'))
 end
 
 %% Network parameters
-ori_rate = 10e6;
-rec_rate = 60e6;
-rate_times = rec_rate/ori_rate;
-related_num = 8;
-h_order = rate_times*related_num;
-add_zero = h_order/2;
-
-split_num = 10;  % Cut a signal into split_num shares
-
-inputSize = h_order+1;
-numHiddenUnits = 60;
-outputSize = rate_times;  % y=h*x+n;  y:(outputSize,m) h:(outputSize,inputSize) x:(inputSize,m)
-maxEpochs = 50;
-miniBatchSize = 80000;
-LearnRateDropPeriod = 12;
-LearnRateDropFactor = 0.1;
-inilearningRate = 1e-2;
-velocity = [];
-momentum = 0.9;
-ite = 0;
-
-%%
-fprintf("This is Threenonlinear network , ini learningRate = %e , min batch size = %d , DropPeriod = %d , DropFactor = %f \n",...
-    inilearningRate,miniBatchSize,LearnRateDropPeriod,LearnRateDropFactor);
-fprintf("Hidden Units = %d , v%d \n",numHiddenUnits,ver)
-
-bias_scope = 0.05:0.04:0.85;
-% amp_scope_ini = [0.48082 0.48082 0.48082 0.48082];
-amp_scope_ini = [0.1613 0.32106 0.48082 0.64058 0.8003 1];
-data_scope = {[1 50] [51 100] [101 150] [151 200] [201 250] [251 300]};
-% data_scope = { [1 40] [41 80] [81 120] [121 160] [161 200] [201 240] [241 280] [281 300] };
-% data_scope = { [1 30] [31 60] [61 90] [91 120] [121 150] [151 180] [181 210] [211 240] [241 270] [271 300] };
-
-train_percent = 0.95;
-loop_train_num = round(length(amp_scope_ini)/2)*2*numel(data_scope);
 
 total_loop_time = 1;
+% bias_scope = 0.05:0.04:0.85;
+% amp_scope_ini = [0.1613 0.32106 0.48082 0.64058 0.8003 1];
+bias_scope = 0.85;
+amp_scope_ini = 1;
+data_scope = {[1 80] [81 160] [161 200] [201 280] [281 300]};
+% data_scope = {[1 100]};
+train_percent = 0.95;
+
 for train_loop_time = 1:total_loop_time
-    dataset_order = cell(1,length(amp_scope_ini));
-    amp_data = zeros(1,2);
-    bias_data = cell(1,2);
     train_time = 0;
     total_data_num = 0;
-    amp_scope = amp_scope_ini;
     total_loss = [];
     total_learnRate = [];
+
+    amp_data = [];
+%     bias_data = cell(1,2);
+    amp_scope = amp_scope_ini;
     while ~isempty(amp_scope)
+        if length(amp_scope)>1
+            amp_order = randperm(length(amp_scope),2);
+            amp_data(1) = amp_scope(amp_order(1));
+            amp_data(2) = amp_scope(amp_order(2));
+            amp_scope(amp_order) = [];
 
-        amp_order = randperm(length(amp_scope),2);
-        amp_data(1) = amp_scope(amp_order(1));
-        amp_data(2) = amp_scope(amp_order(2));
-        amp_scope(amp_order) = [];
+            bias_scope_tmp = bias_scope;
+            while ~isempty(bias_scope_tmp)
+                [data,bias_scope_tmp] = split_data_custom(amp_data,bias_scope_tmp);         
 
-        bias_scope_tmp = bias_scope;
-        while length(bias_scope_tmp) >= 13
-            bias_scope_tmp_ini = bias_scope_tmp;
-            data = cell(1,2);
-            [bias_data,bias_scope_tmp] = split_bias(bias_scope_tmp_ini);
+                for load_scope = 1:numel(data_scope)
+                    load_begin = data_scope{load_scope}(1);
+                    load_end = data_scope{load_scope}(2);
+                    data_num = load_end-load_begin+1;
+                    total_data_num = total_data_num + data_num;
+                    for data_loop = 1:numel(data)
+                        clearvars -except total_loop_time train_loop_time load_scope save_path savePath_mat savePath_txt ...
+                            bias_scope amp_scope_ini data_scope loop_train_num train_percent train_time total_data_num total_loss total_learnRate...
+                            data data_loop amp_scope bias_scope_tmp velocity data_num load_begin load_end
+                        pause(10)
+                        ori_rate = 10e6;
+                        rec_rate = 60e6;
+                        rate_times = rec_rate/ori_rate;
+                        related_num = 8;
+                        h_order = rate_times*related_num;
+                        add_zero = h_order/2;
 
-            data{1} = [amp_data(1) bias_data{1};...
-                amp_data(2) bias_data{2}];
-            data{2} = [amp_data(1) bias_data{2};...
-                amp_data(2) bias_data{1}];
+                        split_num = 10;  % Cut a signal into split_num shares
 
-            amp_loop_data = [];
-            bias_loop_data = cell(1,2);
-            for load_scope = 1:numel(data_scope)
-                load_begin = data_scope{load_scope}(1);
-                load_end = data_scope{load_scope}(2);
-                data_num = load_end-load_begin+1;
-                total_data_num = total_data_num + data_num;
-                for data_loop = 1:numel(data)
-                    train_time = train_time+1;
-                    load_bias_amp
-                    %% Initialize network
-                    xTrain = cell2mat(xTrain);
-                    yTrain = cell2mat(yTrain);
-                    numOber = size(xTrain,2);
-                    numIterPerEpoch = floor(numOber/miniBatchSize);
-                    validationFrequency = floor(numel(xTrain)/miniBatchSize/2);
+                        inputSize = h_order+1;
+                        numHiddenUnits = 60;
+                        outputSize = rate_times;  % y=h*x+n;  y:(outputSize,m) h:(outputSize,inputSize) x:(inputSize,m)
+                        maxEpochs = 50;
+                        LearnRateDropPeriod = 8;
+                        LearnRateDropFactor = 0.1;
+                        inilearningRate = 1e-2;
+                        velocity = [];
+                        momentum = 0.9;
+                        train_time = train_time+1;
+                        load_bias_amp_custom
 
-                    layers = [...
-                        sequenceInputLayer(inputSize)
-                        fullyConnectedLayer(numHiddenUnits)
-                        fullyConnectedLayer(numHiddenUnits)
-                        reluLayer % 1
-                        fullyConnectedLayer(numHiddenUnits)
-                        reluLayer % 2
-                        fullyConnectedLayer(numHiddenUnits)
-                        sigmoidLayer % 3
-                        fullyConnectedLayer(outputSize)];
+                        %% Initialize network
+                        xTrain = cell2mat(xTrain);
+                        yTrain = cell2mat(yTrain);
+                        numOber = size(xTrain,2);
+                        %         miniBatchSize = 80000/4;
+                        %         numIterPerEpoch = floor(numOber/miniBatchSize);
+                        %         validationFrequency = floor(numel(xTrain)/miniBatchSize/2);
+                        numIterPerEpoch = 40;
+                        miniBatchSize = floor(numOber/numIterPerEpoch);
+                        validationFrequency = floor(numel(xTrain)/miniBatchSize/2);
 
-                    lgraph = layerGraph(layers);
-                    dlnet = dlnetwork(lgraph);
+                        layers = [...
+                            sequenceInputLayer(inputSize)
+                            fullyConnectedLayer(numHiddenUnits)
+                            fullyConnectedLayer(numHiddenUnits)
+                            reluLayer % 1
+                            fullyConnectedLayer(numHiddenUnits)
+                            reluLayer % 2
+                            fullyConnectedLayer(numHiddenUnits)
+                            sigmoidLayer % 3
+                            fullyConnectedLayer(outputSize)];
 
-                    %                     options = trainingOptions('adam', ...
-                    %                         'GradientThreshold',1, ...
-                    %                         'MaxEpochs',maxEpochs, ...
-                    %                         'MiniBatchSize',miniBatchSize, ...
-                    %                         'SequenceLength','longest', ...
-                    %                         'Shuffle','every-epoch', ...
-                    %                         'LearnRateSchedule','piecewise',...
-                    %                         'LearnRateDropFactor',LearnRateDropFactor,...
-                    %                         'LearnRateDropPeriod',LearnRateDropPeriod,...
-                    %                         'ValidationData',{xTest1,yTest1},...
-                    %                         'ValidationFrequency',validationFrequency,...
-                    %                         'ValidationPatience',30,...
-                    %                         'Verbose',true,...
-                    %                         'InitialLearnRate',inilearningRate);
-                    %                         'Plots','training-progress');
-                    % 'ExecutionEnvironment','gpu',...
+                        lgraph = layerGraph(layers);
+                        dlnet = dlnetwork(lgraph);
 
-                    %% Train network
-                    net_path = savePath_mat+"/net/looptime"+train_loop_time+"/net"+train_time;
-                    if(~exist(net_path,'dir'))
-                        mkdir(char(net_path));
-                    end
-
-                    ite = 0;
-                    learnRate = inilearningRate;
-                    losss = [];
-                    learnRate_save = [];
-                    for epoch = 1:maxEpochs
-                        idx = randperm(numOber);
-                        xTrain = xTrain(:,idx);
-                        yTrain = yTrain(:,idx);
-
-                        for i = 1:numIterPerEpoch
-                            ite = ite + 1;
-                            idx = (i-1)*miniBatchSize+1 : miniBatchSize*i;
-                            X(:,:,1) = xTrain(:,idx);
-                            Y(:,:,1) = yTrain(:,idx);
-                            dlX = dlarray(single(X),'CBT');
-                            dlY = dlarray(single(Y),'CBT');
-                            dlX = gpuArray(dlX);
-                            dlY = gpuArray(dlY);
-
-                            [gradients,state,loss] = dlfeval(@modelGradientss,dlnet,dlX,dlY);
-                            dlnet.State = state;
-
-                            [dlnet, velocity] = sgdmupdate(dlnet,gradients,velocity,learnRate,momentum);
-
-                            losss(ite) = extractdata(loss);
-                            learnRate_save(ite) = learnRate;
-                            if mod(ite,80) == 0
-                                fprintf(" looptime = %d , training times = %d , epoches = %d , iteration = %d , loss = %e , learnRate = %e \n",...
-                                    train_loop_time,train_time,epoch,ite,losss(ite),learnRate);
-                            end
-                            clear X Y dlX dlY
+                        %% Train network                  
+                        net_path = savePath_mat+"/net/looptime"+train_loop_time+"/net"+train_time;
+                        if(~exist(net_path,'dir'))
+                            mkdir(char(net_path));
                         end
 
-                        if mod(epoch,LearnRateDropPeriod) == 0
-                            learnRate = learnRate*LearnRateDropFactor;                            
-                        end                       
-                    end
-                    total_loss(:,train_time) = losss.';
-                    total_learnRate(:,train_time) = learnRate_save.';
-                    save(net_path+"/net.mat",'dlnet');  % Save the trained network
+                        [ dlnet, velocity, losss, learnRate_save ] = dnn_train_custom(maxEpochs, numOber, xTrain, yTrain, numIterPerEpoch, miniBatchSize, dlnet, ...
+                            velocity, inilearningRate, momentum,train_loop_time, train_time, LearnRateDropPeriod, LearnRateDropFactor);
 
+                        total_loss(:,train_time) = losss.';
+                        total_learnRate(:,train_time) = learnRate_save.';
+                        save(net_path+"/net.mat",'dlnet');  % Save the trained network
+                    end           % for data_loop = 1:numel(data) ; amp_scope size > 1
+                end               % for load_scope = 1:numel(data_scope) ; amp_scope size > 1
+            end                   % while ~isempty(bias_scope_tmp) ; amp_scope size > 1
+            
+        else
 
-%                     for i = 1:test_num
-%                         eval([['nmse_valid',num2str(i),'_mat'],'= zeros(1,1);']);
-%                     end
-%                     xTrain_reshape = reshape(xTrain,[],test_num);
-%                     yTrain_reshape = reshape(yTrain,[],test_num);
-% 
-%                     for i = 1:test_num
-%                         xValid_i = ['xValid',num2str(i)];
-%                         eval([xValid_i ,'= xTrain_reshape(:,i);']);
-%                         yValid_i = ['yValid',num2str(i)];
-%                         eval([yValid_i ,'= yTrain_reshape(:,i);']);
-%                     end
-% 
-%                     for j = 1:test_num
-%                         x_valid = eval(['xValid',num2str(j)]).';
-%                         y_valid = eval(['yValid',num2str(j)]).';
-% 
-%                         y_hat_valid = predict(dlnet,x_valid,'MiniBatchSize',miniBatchSize);
-%                         y_hatT_valid = y_hat_valid.';
-% 
-%                         nmseNum_valid = cellfun(@(hat,exp)10*log10(sum(sum((hat-exp).^2))/sum(sum(exp.^2))),y_hatT_valid ,y_valid);
-%                         nmse_loop_valid = mean(nmseNum_valid);
-%                         eval([['nmse_valid',num2str(j),'_mat'],'=nmse_loop_valid;']);
-%                     end
-%                     fprintf("looptime = %d , already training %d times , total train num = %d \n",train_loop_time,train_time,loop_train_num);
-% 
-%                     nmse_valid_mean = zeros(1,test_num);
-%                     for i = 1:test_num
-%                         nmse_valid_mean_tem = mean(eval(['nmse_valid',num2str(i),'_mat']));
-%                         nmse_valid_mean(i) = nmse_valid_mean_tem;
-%                     end
-                    %% Save data
-                    for i = 1:test_num
-                        if i == 1
-%                             save_Nmse_valid = fopen(net_path+"/save_Nmse_valid.txt",'w');
-                            save_amp_bias_txt = fopen(net_path+"/save_amp.txt",'w');
-                            %         save(savePath_mat+"/save_Nmse.mat",save_nmse_name);
-                        else
-%                             save_Nmse_valid = fopen(net_path+"/save_Nmse_valid.txt",'a');
-                            save_amp_bias_txt = fopen(net_path+"/save_amp.txt",'a');
-                            %         save(savePath_mat+"/save_Nmse.mat",save_nmse_name,'-append');
+            amp_data(1) = amp_scope(1);
+            amp_scope(1) = [];
+            bias_scope_tmp = bias_scope;
+            while ~isempty(bias_scope_tmp)
+                [data,bias_scope_tmp] = split_data_custom(amp_data,bias_scope_tmp);         
+
+                for load_scope = 1:numel(data_scope)
+                    load_begin = data_scope{load_scope}(1);
+                    load_end = data_scope{load_scope}(2);
+                    data_num = load_end-load_begin+1;
+                    total_data_num = total_data_num + data_num;
+                    for data_loop = 1:numel(data)
+                        clearvars -except total_loop_time train_loop_time load_scope save_path savePath_mat savePath_txt ...
+                            bias_scope amp_scope_ini data_scope loop_train_num train_percent train_time total_data_num total_loss total_learnRate...
+                            data data_loop amp_scope bias_scope_tmp velocity data_num load_begin load_end
+                        pause(10)
+                        ori_rate = 10e6;
+                        rec_rate = 60e6;
+                        rate_times = rec_rate/ori_rate;
+                        related_num = 8;
+                        h_order = rate_times*related_num;
+                        add_zero = h_order/2;
+
+                        split_num = 10;  % Cut a signal into split_num shares
+
+                        inputSize = h_order+1;
+                        numHiddenUnits = 60;
+                        outputSize = rate_times;  % y=h*x+n;  y:(outputSize,m) h:(outputSize,inputSize) x:(inputSize,m)
+                        maxEpochs = 50;
+                        LearnRateDropPeriod = 8;
+                        LearnRateDropFactor = 0.1;
+                        inilearningRate = 1e-2;
+                        velocity = [];
+                        momentum = 0.9;
+                        train_time = train_time+1;
+                        load_bias_amp_custom
+
+                        %% Initialize network
+                        xTrain = cell2mat(xTrain);
+                        yTrain = cell2mat(yTrain);
+                        numOber = size(xTrain,2);
+                        %         miniBatchSize = 80000/4;
+                        %         numIterPerEpoch = floor(numOber/miniBatchSize);
+                        %         validationFrequency = floor(numel(xTrain)/miniBatchSize/2);
+                        numIterPerEpoch = 40;
+                        miniBatchSize = floor(numOber/numIterPerEpoch);
+                        validationFrequency = floor(numel(xTrain)/miniBatchSize/2);
+
+                        layers = [...
+                            sequenceInputLayer(inputSize)
+                            fullyConnectedLayer(numHiddenUnits)
+                            fullyConnectedLayer(numHiddenUnits)
+                            reluLayer % 1
+                            fullyConnectedLayer(numHiddenUnits)
+                            reluLayer % 2
+                            fullyConnectedLayer(numHiddenUnits)
+                            sigmoidLayer % 3
+                            fullyConnectedLayer(outputSize)];
+
+                        lgraph = layerGraph(layers);
+                        dlnet = dlnetwork(lgraph);
+
+                        %% Train network                  
+                        net_path = savePath_mat+"/net/looptime"+train_loop_time+"/net"+train_time;
+                        if(~exist(net_path,'dir'))
+                            mkdir(char(net_path));
                         end
-%                         fprintf(save_Nmse_valid,"%f \n" , nmse_valid_mean(i));
-                        fprintf(save_amp_bias_txt," amp = %f , bias = %f ,bandpower = %f \n" , save_amp(i), bias_save(i), band_power(i));
-                        if i == test_num
-                            fprintf(save_amp_bias_txt," data load begin = %d , load end = %d  \n" , load_begin,load_end);
-                        end
-%                         fclose(save_Nmse_valid);
-                        fclose(save_amp_bias_txt);
-                    end
 
-                    if train_time == loop_train_num
-                        save(savePath_mat+"/net/looptime"+train_loop_time+"/loss.mat","total_loss");  
-                        save(savePath_mat+"/net/looptime"+train_loop_time+"/learnRate.mat","total_learnRate");
-                    end
+                        [ dlnet, velocity, losss, learnRate_save ] = dnn_train_custom(maxEpochs, numOber, xTrain, yTrain, numIterPerEpoch, miniBatchSize, dlnet, ...
+                            velocity, inilearningRate, momentum,train_loop_time, train_time, LearnRateDropPeriod, LearnRateDropFactor);
 
-                    for i =1:test_num
-                        eval(['clear xTest',num2str(i)])
-                        eval(['clear yTest',num2str(i)])
-                        eval(['clear xValid',num2str(i)])
-                        eval(['clear yValid',num2str(i)])
-                    end
-                    pause(10)
-                end
-            end
-        end
-    end
+                        total_loss(:,train_time) = losss.';
+                        total_learnRate(:,train_time) = learnRate_save.';
+                        save(net_path+"/net.mat",'dlnet');  % Save the trained network
+
+                    end           % for data_loop = 1:numel(data) ; amp_scope size = 1
+                end               % for load_scope = 1:numel(data_scope) ; amp_scope size = 1
+            end                   % while ~isempty(bias_scope_tmp) ; amp_scope size = 1     
+
+        end              % if length(amp_scope)>1
+        
+    end      % while ~isempty(amp_scope)
+
 end
-%% Save data
 
+                   
+%% Save data
 save_parameter = fopen(savePath_txt+"/save_parameter.txt",'w');
 fprintf(save_parameter,"\n \n");
-fprintf(save_parameter," Threenonlinear ,\r\n ini learningRate = %e ,\r\n min batch size = %d , \r\n " ...
-    ,inilearningRate, miniBatchSize);
-fprintf(save_parameter,"DropPeriod = %d , DropFactor = %f ,\r\n ",LearnRateDropPeriod, LearnRateDropFactor);
+fprintf(save_parameter," Custom training \n");
+fprintf(save_parameter," Threenonlinear ,\r\n 40 iteration per epoch , \r\n ");
+fprintf(save_parameter,"ini learningRate = %e ,\r\n DropPeriod = %d , DropFactor = %f ,\r\n ",inilearningRate,LearnRateDropPeriod, LearnRateDropFactor);
 fprintf(save_parameter,"amp =");
 for i = 1:length(amp_scope_ini)
     fprintf(save_parameter," %f,",amp_scope_ini(i));
@@ -261,8 +223,7 @@ for i = 1:length(bias_scope)
     fprintf(save_parameter," %f,",bias_scope(i));
 end
 fprintf(save_parameter,"\r\n");
-fprintf(save_parameter," loop data num = %d , split num = %d , loop train num = %d , total train loop = %d ...\r\n",...
-    total_data_num/total_loop_time,split_num,total_data_num*split_num*train_percent/total_loop_time,total_loop_time);
+fprintf(save_parameter," data num = %d , split num = %d , train num = %d\r\n",total_data_num,split_num,total_data_num*split_num*train_percent);
 fprintf(save_parameter," validationFrequency is floor(numel(xTrain)/miniBatchSize/2) \n");
 fprintf(save_parameter," origin rate = %e , receive rate = %e \n",ori_rate,rec_rate);
 fprintf(save_parameter," H order = %d ,related num = %d \n",h_order,related_num);
@@ -272,8 +233,8 @@ fclose(save_parameter);
 
 
 fprintf("\n Training end ..." + ...
-    "\n Threenonlinear , ini learningRate = %e , min batch size = %d , DropPeriod = %d , DropFactor = %f , data_num = %d \n",...
-    inilearningRate, miniBatchSize, LearnRateDropPeriod, LearnRateDropFactor, data_num);
+    "\n Threenonlinear , ini learningRate = %e ,  DropPeriod = %d , DropFactor = %f , data_num = %d \n",...
+    inilearningRate,  LearnRateDropPeriod, LearnRateDropFactor, total_data_num);
 fprintf(" result saved in %s \n",savePath_mat);
 
 

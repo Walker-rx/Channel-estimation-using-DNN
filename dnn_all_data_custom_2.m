@@ -5,7 +5,7 @@ t = datetime('now');
 folder = '4.14';
 save_path = "data_save/light_data_"+folder;
 
-ver = 7;
+ver = 50;
 savePath_txt = save_path + "/result1/"+t.Month+"."+t.Day+"/mix_bias_amp/Threenonlinear"+ver;   
 savePath_mat = save_path + "/result1/"+t.Month+"."+t.Day+"/mix_bias_amp/Threenonlinear"+ver; 
 if(~exist(savePath_txt,'dir'))
@@ -67,7 +67,8 @@ for train_loop_time = 1:total_loop_time
 
     for load_scope = 1:numel(data_scope)
         clearvars -except total_loop_time train_loop_time load_scope save_path savePath_mat savePath_txt ...
-            bias_scope amp_scope_ini data_scope loop_train_num train_percent train_time total_data_num total_loss total_learnRate
+            bias_scope amp_scope_ini data_scope loop_train_num train_percent train_time total_data_num total_loss total_learnRate ...
+            velocity
         pause(10)
         %%
         ori_rate = 10e6;
@@ -89,7 +90,7 @@ for train_loop_time = 1:total_loop_time
         velocity = [];
         momentum = 0.9;
 
-        %%
+        %% Load data
         data = split_data_custom_2(amp_scope_ini,bias_scope);       
         load_begin = data_scope{load_scope}(1);
         load_end = data_scope{load_scope}(length(data_scope{load_scope}));
@@ -98,6 +99,7 @@ for train_loop_time = 1:total_loop_time
 
         train_time = train_time+1;
         load_bias_amp_custom
+        
         %% Initialize network
         xTrain = cell2mat(xTrain);
         yTrain = cell2mat(yTrain);
@@ -129,43 +131,9 @@ for train_loop_time = 1:total_loop_time
             mkdir(char(net_path));
         end
 
-        ite = 0;
-        learnRate = inilearningRate;
-        losss = [];
-        learnRate_save = [];
-        for epoch = 1:maxEpochs
-            idx = randperm(numOber);
-            xTrain = xTrain(:,idx);
-            yTrain = yTrain(:,idx);
+        [ dlnet, velocity, losss, learnRate_save ] = dnn_train_custom(maxEpochs, numOber, xTrain, yTrain, numIterPerEpoch, miniBatchSize, dlnet, ...
+            velocity, inilearningRate, momentum,train_loop_time, train_time, LearnRateDropPeriod, LearnRateDropFactor);
 
-            for i = 1:numIterPerEpoch
-                ite = ite + 1;
-                idx = (i-1)*miniBatchSize+1 : miniBatchSize*i;
-                X(:,:,1) = xTrain(:,idx);
-                Y(:,:,1) = yTrain(:,idx);
-                dlX = dlarray(single(X),'CBT');
-                dlY = dlarray(single(Y),'CBT');
-                dlX = gpuArray(dlX);
-                dlY = gpuArray(dlY);
-
-                [gradients,state,loss] = dlfeval(@modelGradientss,dlnet,dlX,dlY);
-                dlnet.State = state;
-
-                [dlnet, velocity] = sgdmupdate(dlnet,gradients,velocity,learnRate,momentum);
-
-                losss(ite) = extractdata(loss);
-                learnRate_save(ite) = learnRate;
-                if mod(ite,floor(numIterPerEpoch/2)) == 0
-                    fprintf(" looptime = %d , training times = %d , epoches = %d , iteration = %d , loss = %e , learnRate = %e \n",...
-                        train_loop_time,train_time,epoch,ite,losss(ite),learnRate);
-                end
-                clear X Y dlX dlY
-            end
-
-            if mod(epoch,LearnRateDropPeriod) == 0
-                learnRate = learnRate*LearnRateDropFactor;
-            end
-        end
         total_loss(:,train_time) = losss.';
         total_learnRate(:,train_time) = learnRate_save.';
         save(net_path+"/net.mat",'dlnet');  % Save the trained network

@@ -2,7 +2,7 @@ clear
 close all
 
 t = datetime('now');
-folder = '4.1';
+folder = '4.14';
 save_path = "data_save/light_data_"+folder;
 
 %% Network parameters
@@ -37,7 +37,7 @@ if data_type == 1
     bias_end = 0.85;
     bias_loop_num = (bias_end-bias_begin)/bias_step+1;
 
-    amp_begin = 0.1613;
+    amp_begin = 1;
     amp_norm = 0;
     amp_loop_begin = amp_begin;
     amp_loop_end = amp_begin;

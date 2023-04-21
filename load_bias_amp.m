@@ -2,14 +2,16 @@
 save_amp = [];
 band_power = [];
 bias_save = [];
+bias_all = [];
 xTrain = [];
 yTrain = [];
-bias_loop = cell(1,2);
+% bias_loop = cell(1,2);
 
-amp_loop_data(1) = data{data_loop}(1,1);
-bias_loop_data{1} = data{data_loop}(1,2:end);
-amp_loop_data(2) = data{data_loop}(2,1);
-bias_loop_data{2} = data{data_loop}(2,2:end);
+for i = 1:numel(bias_loop_data)
+    amp_loop_data(i) = data{data_loop}(i,1);
+    bias_loop_data{i} = data{data_loop}(i,2:end);
+end
+
 test_num = 0;
 for i = 1:length(amp_loop_data)
     amp_folder = amp_loop_data(i);
@@ -66,9 +68,10 @@ for i = 1:test_num
 end
 
 %%  Reshape data
-bias_loop_data{1}(find(bias_loop_data{1}==0)) = [];
-bias_loop_data{2}(find(bias_loop_data{2}==0)) = [];
-bias_all = [ bias_loop_data{1} , bias_loop_data{2}];
+for i = numel(bias_loop_data)
+    bias_loop_data{i}(find(bias_loop_data{i}==0)) = [];
+    bias_all = [ bias_all , bias_loop_data{i}];
+end
 for i = 1:numel(xTrain)
     xTrain{i} = toeplitz(xTrain{i}(h_order:-1:1),xTrain{i}(h_order:end));
     xTrain{i} = [xTrain{i}; bias_all(floor((i-1)/trainNum)+1)*ones(1,size(xTrain{i},2) )];

@@ -2,7 +2,7 @@ clear
 close all
 
 t = datetime('now');
-folder = '4.1';
+folder = '4.14';
 save_path = "data_save/light_data_"+folder;
 ori_rate = 10e6;
 rec_rate = 60e6;
@@ -19,7 +19,7 @@ if data_type == 3
     bias_step = 0.04;
     bias_end = 0.85;
 
-    amp = 0.1613;
+    amp = 1;
     amp_loop_begin = amp;
     amp_loop_end = amp;
     amp_loop_step = 1;
@@ -53,7 +53,7 @@ elseif data_type == 2
 end
 
 looptime = 0;
-ver = 1;
+ver = amp;
 
 folder_name = "light_data_"+folder+", v"+ver;
 disp(folder_name);
@@ -138,7 +138,7 @@ for loop = amp_loop_begin:amp_loop_step:amp_loop_end
         Nmse = mean(mean(Nmse_mat));
 
         %%  Save data
-        savePath_result = save_path + "/result"+data_type+"/"+t.Month+"."+t.Day+"/norm_LS"+ver;
+        savePath_result = save_path + "/result"+data_type+"/"+t.Month+"."+t.Day+"/norm_LS_"+ver;
         if(~exist(savePath_result,'dir'))
             mkdir(char(savePath_result));
         end
