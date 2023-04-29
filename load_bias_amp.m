@@ -68,7 +68,7 @@ for i = 1:test_num
 end
 
 %%  Reshape data
-for i = numel(bias_loop_data)
+for i = 1:numel(bias_loop_data)
     bias_loop_data{i}(find(bias_loop_data{i}==0)) = [];
     bias_all = [ bias_all , bias_loop_data{i}];
 end
@@ -92,4 +92,7 @@ for i = 1:test_num
     eval([['yTest',num2str(i)],'= ytop_tem;']);
 end
 
+
+xValidation = xTest1;
+yValidation = yTest1;
 %%

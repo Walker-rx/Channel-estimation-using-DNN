@@ -86,6 +86,8 @@ for i = 1:test_num
 end
 
 
-xValidation = xTest1;
-yValidation = yTest1;
+% xValidation = xTest1;
+% yValidation = yTest1;
+xValidation = [xValidation,xTest1];
+yValidation = [yValidation,yTest1];
 %%
