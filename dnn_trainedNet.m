@@ -36,8 +36,8 @@ train_percent = 0.05;
 folder = '4.14';
 save_path = "data_save/light_data_"+folder;
 
-ver = 7;
-net_folder = 4.28;
+ver = 8;
+net_folder = 4.29;
 
 
 %% Loop parameter settings

@@ -25,6 +25,7 @@ bias_scope = 0.05:0.04:0.85;
 % amp_scope_ini = 1;
 
 total_cell = 150;
+total_data_num = total_cell;
 loop_data_num = 30;
 if loop_data_num>30
     loop_data_num = 30;
@@ -67,7 +68,7 @@ for train_loop_time = 1:total_loop_time
                     load_begin = data_scope{load_scope}(1);
                     load_end = data_scope{load_scope}(2);
                     data_num = load_end-load_begin+1;
-                    total_data_num = total_data_num + data_num;
+                    
                     for data_loop = 1:numel(data)
                         clearvars -except total_loop_time train_loop_time load_scope save_path savePath_mat savePath_txt ...
                             bias_scope amp_scope_ini data_scope loop_train_num train_percent train_time total_data_num total_loss total_learnRate...
