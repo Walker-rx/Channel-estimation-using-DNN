@@ -22,6 +22,7 @@ x_mat = load(load_path+"/save_signal_ori.mat");
 y_mat = load(load_path+"/save_signal_received_real_send1.mat");
 fin_mat = load(load_path+"/save_fin_syn_point_real_send1.mat");
 upsample_norm_mat = load(load_path+"/save_upsample_norm.mat");
+
 x_names = fieldnames(x_mat);
 y_names = fieldnames(y_mat);
 fin_names = fieldnames(fin_mat);
@@ -44,7 +45,8 @@ for name_order = load_begin:load_end
     data_ori = signal_ori(pilot_length+zero_length+1:end);
     data_received = signal_received(fin_syn_point + (pilot_length+zero_length)*rate_times : end);
     for i_for_load = 1:split_num
-        x{split_num*(load_data_loop-1)+i_for_load} = [zeros(1,add_zero),data_ori(split_length*(i_for_load-1)+1 : split_length*i_for_load)]/upsample_norm(load_data_loop);
+        x{split_num*(load_data_loop-1)+i_for_load} = [zeros(1,add_zero),data_ori(split_length*(i_for_load-1)+1 : split_length*i_for_load)];
+        x{split_num*(load_data_loop-1)+i_for_load} =  x{split_num*(load_data_loop-1)+i_for_load}/upsample_norm(load_data_loop);
         y{split_num*(load_data_loop-1)+i_for_load} = data_received(split_length*rate_times*(i_for_load-1)+1 : split_length*rate_times*i_for_load);
     end
 end

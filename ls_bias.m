@@ -13,67 +13,39 @@ add_zero = round(h_order/2);
 split_num = 1;
 
 %% Loop parameter settings
-data_type = 3;
-if data_type == 3
-    bias_begin = 0.05;
-    bias_step = 0.04;
-    bias_end = 0.85;
 
-    amp = 1;
-    amp_loop_begin = amp;
-    amp_loop_end = amp;
-    amp_loop_step = 1;
-    amp_loop_num = (amp_loop_end - amp_loop_begin)/amp_loop_step + 1 ;
+bias_scope = 0.05:0.04:0.85;
+bias_begin = bias_scope(1);
+amp_scope = [0.005 0.007 0.015 0.024 0.034 0.045 0.08 0.18 0.25 0.3];
+amp_loop_num = length(amp_scope) ;
 
-
-    amp_begin = amp;
-    amp_norm = 0;
-
-    load_begin = 1;
-    load_end = 200;
-    data_num = load_end-load_begin+1;
-elseif data_type == 2
-    bias_begin = 0.05;
-    bias_step = 0.04;
-    bias_end = 0.85;
-
-    amp = 0.1613;
-    amp_loop_begin = amp;
-    amp_loop_end = amp;
-    amp_loop_step = 1;
-    amp_loop_num = (amp_loop_end - amp_loop_begin)/amp_loop_step + 1 ;
-
-
-    amp_begin = amp;
-    amp_norm = 0;
-
-    load_begin = 1;
-    load_end = 100;
-    data_num = load_end-load_begin+1;
-end
+load_begin = 1;
+load_end = 60;
+data_num = load_end-load_begin+1;
 
 looptime = 0;
-ver = amp;
-
-folder_name = "light_data_"+folder+", v"+ver;
-disp(folder_name);
 
 %%
-for loop = amp_loop_begin:amp_loop_step:amp_loop_end
+for loop = 1:amp_loop_num
+    amp = amp_scope(loop);
+    ver = amp;
+    folder_name = "light_data_"+folder+", v"+ver;
+    disp(folder_name);
+
     save_amp = zeros(1,amp_loop_num);
-    for bias = bias_begin : bias_step :bias_end
+    for bias_loop = 1:length(bias_scope)
+        bias = bias_scope(bias_loop);
         %% Load data
         looptime = looptime + 1;
-        load_path = save_path + "/data/10M/amp"+amp+"/bias"+bias+"/mat";
+        load_path = "/home/xliangseu/ruoxu/equalization-using-DNN/data_save/light_data_5.21/data/10M/amp"+amp+"/bias"+bias+"/mat";
         load_data
         %% Normalize data
-        %     x = cellfun(@(cell1)(cell1*100*1.1^amp),x,'UniformOutput',false);
-        amp_loop = 32000*(amp_begin+(loop-1)*amp_norm);
+        amp_loop = 32000*amp;
         x = cellfun(@(cell1)(cell1*amp_loop),x,'UniformOutput',false);
         save_amp(looptime) = 10*log10(amp_loop^2);
 
-        load_path = "data_save/light_data_3.10/data/10M/rand_bias0.3/";
-        norm_mat = load(load_path+"/save_norm.mat");
+        load_path_norm = "data_save/light_data_3.10/data/10M/rand_bias0.3/";
+        norm_mat = load(load_path_norm+"/save_norm.mat");
         norm_names = fieldnames(norm_mat);
         norm_factor = gather(eval(strcat('norm_mat.',norm_names{1})));
         x = cellfun(@(cell1)(cell1*norm_factor),x,'UniformOutput',false);
@@ -138,7 +110,8 @@ for loop = amp_loop_begin:amp_loop_step:amp_loop_end
         Nmse = mean(mean(Nmse_mat));
 
         %%  Save data
-        savePath_result = save_path + "/result"+data_type+"/"+t.Month+"."+t.Day+"/norm_LS_"+ver;
+%         savePath_result = save_path + "/result1"+"/"+t.Month+"."+t.Day+"/norm_LS/amp"+ver;
+        savePath_result = save_path + "/result1/norm_LS/amp"+ver;
         if(~exist(savePath_result,'dir'))
             mkdir(char(savePath_result));
         end
@@ -147,20 +120,24 @@ for loop = amp_loop_begin:amp_loop_step:amp_loop_end
             save_Nmse = fopen(savePath_result+"/save_Nmse.txt",'w');
             save_bandpower = fopen(savePath_result+"/save_bandpower.txt",'w');
             save_amp_txt = fopen(savePath_result+"/save_amp.txt",'w');
+            save_bias_txt = fopen(savePath_result+"/save_bias.txt",'w');
             %             save(savePath_result+"/save_h.mat",saveH);
         else
             save_Nmse = fopen(savePath_result+"/save_Nmse.txt",'a');
             save_bandpower = fopen(savePath_result+"/save_bandpower.txt",'a');
             save_amp_txt = fopen(savePath_result+"/save_amp.txt",'a');
+            save_bias_txt = fopen(savePath_result+"/save_bias.txt",'a');
             %             save(savePath_result+"/save_h.mat",saveH,'-append');
         end
         fprintf(save_Nmse,'%f \r\n',Nmse);
         fprintf(save_bandpower,'%f \r\n',band_power);
         fprintf(save_amp_txt,"%f \n" , save_amp(looptime));
+        fprintf(save_bias_txt,"%f \n" , bias);
         fclose(save_Nmse);
         fclose(save_bandpower);
         fclose(save_amp_txt);
-        fprintf(' bias = %d , nmse = %.6g \r\n',bias,Nmse);
+        fclose(save_bias_txt);
+        fprintf('amp= %f , bias = %d , nmse = %.6g \r\n',amp,bias,Nmse);
 
     end
 %         %%  Save data
@@ -193,10 +170,20 @@ for loop = amp_loop_begin:amp_loop_step:amp_loop_end
 end
 save_parameter = fopen(savePath_result+"/save_parameter.txt",'w');
 fprintf(save_parameter,"\n \n");
-fprintf(save_parameter," LS \r\n amp begin = %.5f , amp end = %.5f , amp step = %.5f \r\n ",...
-    amp_loop_begin, amp_loop_end, amp_loop_step);
-fprintf(save_parameter,"bias begin = %.2f , bias end = %.2f , bias step = %.2f \r\n ",...
-    bias_begin, bias_end, bias_step);
+fprintf(save_parameter," LS \r\n ");
+
+fprintf(save_parameter,"amp =");
+for i = 1:amp_loop_num
+    fprintf(save_parameter," %f,",amp_scope(i));
+end
+fprintf(save_parameter,"\r\n");
+
+fprintf(save_parameter," bias =");
+for i = 1:length(bias_scope)
+    fprintf(save_parameter," %f,",bias_scope(i));
+end
+fprintf(save_parameter,"\r\n");
+
 fprintf(save_parameter,"data_num = %d , split num = %d , train num = %d\r\n",data_num,split_num,trainNum);
 fprintf(save_parameter," origin rate = %e , receive rate = %e \n",ori_rate,rec_rate);
 fprintf(save_parameter," H order = %d ,related num = %d \n",h_order,related_num);

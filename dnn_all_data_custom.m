@@ -7,7 +7,7 @@ t = datetime('now');
 folder = '4.14';
 save_path = "data_save/light_data_"+folder;
 
-ver = 8;
+ver = 14;
 
 savePath_txt = save_path + "/result1/"+t.Month+"."+t.Day+"/mix_bias_amp/Threenonlinear"+ver;   
 savePath_mat = save_path + "/result1/"+t.Month+"."+t.Day+"/mix_bias_amp/Threenonlinear"+ver; 
@@ -19,12 +19,12 @@ if(~exist(savePath_mat,'dir'))
 end
 
 %% Network parameters
-% bias_scope = 0.05:0.04:0.85;
-amp_scope_ini = [0.1613 0.32106 0.48082 0.64058 0.8003 1];
 bias_scope = 0.05:0.04:0.85;
+amp_scope_ini = [0.1613 0.32106 0.48082 0.64058 0.8003 1];
+% bias_scope = 0.45;
 % amp_scope_ini = 1;
 
-total_cell = 150;
+total_cell = 60;
 total_data_num = total_cell;
 loop_data_num = 30;
 if loop_data_num>30
@@ -72,7 +72,7 @@ for train_loop_time = 1:total_loop_time
                     for data_loop = 1:numel(data)
                         clearvars -except total_loop_time train_loop_time load_scope save_path savePath_mat savePath_txt ...
                             bias_scope amp_scope_ini data_scope loop_train_num train_percent train_time total_data_num total_loss total_learnRate...
-                            data data_loop amp_scope bias_scope_tmp velocity data_num load_begin load_end averageGrad averageSqGrad
+                            data data_loop amp_scope bias_scope_tmp velocity data_num load_begin load_end averageGrad averageSqGrad tStart tic
                         pause(10)
                         ori_rate = 10e6;
                         rec_rate = 60e6;
@@ -84,7 +84,8 @@ for train_loop_time = 1:total_loop_time
                         split_num = 10;  % Cut a signal into split_num shares
 
                         inputSize = h_order+1;
-                        numHiddenUnits = 60;
+%                         numHiddenUnits = 60;
+                        numHiddenUnits = 200;
                         outputSize = rate_times;  % y=h*x+n;  y:(outputSize,m) h:(outputSize,inputSize) x:(inputSize,m)
                         maxEpochs = 60;
                         LearnRateDropPeriod = 8;
@@ -93,7 +94,9 @@ for train_loop_time = 1:total_loop_time
                         velocity = [];
                         momentum = 0.9;
                         train_time = train_time+1;
+
                         load_bias_amp_custom
+                        
                         for clear_loop = 1:test_num
                             eval("clear xTest"+clear_loop);
                             eval("clear yTest"+clear_loop);
@@ -165,7 +168,7 @@ for train_loop_time = 1:total_loop_time
                     for data_loop = 1:numel(data)
                         clearvars -except total_loop_time train_loop_time load_scope save_path savePath_mat savePath_txt ...
                             bias_scope amp_scope_ini data_scope loop_train_num train_percent train_time total_data_num total_loss total_learnRate...
-                            data data_loop amp_scope bias_scope_tmp velocity data_num load_begin load_end averageGrad averageSqGrad
+                            data data_loop amp_scope bias_scope_tmp velocity data_num load_begin load_end averageGrad averageSqGrad tStart tic
                         pause(10)
                         ori_rate = 10e6;
                         rec_rate = 60e6;
@@ -177,7 +180,8 @@ for train_loop_time = 1:total_loop_time
                         split_num = 10;  % Cut a signal into split_num shares
 
                         inputSize = h_order+1;
-                        numHiddenUnits = 60;
+%                         numHiddenUnits = 60;
+                        numHiddenUnits = 200;
                         outputSize = rate_times;  % y=h*x+n;  y:(outputSize,m) h:(outputSize,inputSize) x:(inputSize,m)
                         maxEpochs = 60;
                         LearnRateDropPeriod = 8;
@@ -260,7 +264,7 @@ for i = 1:length(bias_scope)
     fprintf(save_parameter," %f,",bias_scope(i));
 end
 fprintf(save_parameter,"\r\n");
-fprintf(save_parameter," data num = %d , split num = %d , train num = %d\r\n",total_data_num,split_num,total_data_num*split_num*train_percent);
+fprintf(save_parameter," data num = %d , split num = %d , train num = %d\r\n",total_cell,split_num,total_cell*split_num*train_percent);
 fprintf(save_parameter," validationFrequency is floor(numIterPerEpoch/4) \n");
 fprintf(save_parameter," origin rate = %e , receive rate = %e \n",ori_rate,rec_rate);
 fprintf(save_parameter," H order = %d ,related num = %d \n",h_order,related_num);

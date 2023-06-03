@@ -2,7 +2,9 @@ clear
 close all
 
 t = datetime('now');
-folder = '4.14';
+folder = '5.21';
+% save_path = "data_save/light_data_"+folder;
+load_path_ini = "/home/xliangseu/ruoxu/equalization-using-DNN/data_save/light_data_"+folder;
 save_path = "data_save/light_data_"+folder;
 
 ver = 1;
@@ -24,10 +26,12 @@ related_num = 8;
 h_order = rate_times*related_num;
 add_zero = h_order/2;
 
+total_cell = 60;
+total_data_num = total_cell;
 split_num = 10;  % Cut a signal into split_num shares
 
 inputSize = h_order+1;
-numHiddenUnits = 60;
+numHiddenUnits = 200;
 outputSize = rate_times;  % y=h*x+n;  y:(outputSize,m) h:(outputSize,inputSize) x:(inputSize,m)
 maxEpochs = 200;
 LearnRateDropPeriod = 8;
@@ -41,27 +45,25 @@ fprintf("This is Threenonlinear network , ini learningRate = %e  , DropPeriod = 
 fprintf("Hidden Units = %d , v%d \n",numHiddenUnits,ver)
 
 train_loop_time = 1;
-% bias_scope = 0.05:0.04:0.85;
-amp_scope_ini = [0.1613 0.32106 0.48082 0.64058 0.8003 1];
+amp_scope_ini = [0.005 0.007 0.015 0.024 0.034 0.045 0.08 0.18 0.25 0.3];
 % data_scope = {[1 80] [81 160] [161 200] [201 280] [281 300]};
 bias_scope = 0.05:0.04:0.85;
-% amp_scope_ini = 1;
 
 loop_data_num = 30;
 if loop_data_num>30
     loop_data_num = 30;
 end
-loop_train_num = ceil(300/loop_data_num);
+loop_train_num = ceil(total_cell/loop_data_num);
 
 data_scope = cell(1,loop_train_num);
 for i = 1:loop_train_num
     if i == loop_train_num
-        data_scope{i} = [(i-1)*loop_data_num+1 , 300];
+        data_scope{i} = [(i-1)*loop_data_num+1 , total_cell];
     else
         data_scope{i} = [(i-1)*loop_data_num+1 , i*loop_data_num];
     end   
 end
-data_scope = {[1 80] [81 160] [161 200] [201 280] [281 300]};
+% data_scope = {[1 80] [81 160] [161 200] [201 280] [281 300]};
 train_percent = 0.95;
 total_data_num = 0;
 
@@ -87,11 +89,11 @@ while ~isempty(amp_scope)
                 load_begin = data_scope{load_scope}(1);
                 load_end = data_scope{load_scope}(2);
                 data_num = load_end-load_begin+1;
-                total_data_num = total_data_num + data_num;
+                
                 for data_loop = 1:numel(data)
                     train_time = train_time+1;
                     load_bias_amp_custom
-
+                    total_data_num = total_data_num + data_num;
 %                     %% Shuffling data
 %                     xTrain_end = {};
 %                     yTrain_end = {};
@@ -215,7 +217,7 @@ for i = 1:length(bias_scope)
     fprintf(save_parameter," %f,",bias_scope(i));
 end
 fprintf(save_parameter,"\r\n");
-fprintf(save_parameter," data num = %d , split num = %d , train num = %d\r\n",total_data_num,split_num,total_data_num*split_num*train_percent);
+fprintf(save_parameter," data num = %d , split num = %d , train num = %d\r\n",total_cell,split_num,total_cell*split_num*train_percent);
 fprintf(save_parameter," validationFrequency is floor(numel(xTrain)/miniBatchSize/4) \n");
 fprintf(save_parameter," origin rate = %e , receive rate = %e \n",ori_rate,rec_rate);
 fprintf(save_parameter," H order = %d ,related num = %d \n",h_order,related_num);

@@ -26,14 +26,14 @@ function [ ] = dnn_train_default(train_time, savePath_mat, xTrain, yTrain, layer
 
     end
 
-    for i = 1:test_num
+    for i = 1:length(save_amp)
         if i == 1
             save_amp_bias_txt = fopen(net_path+"/save_amp.txt",'w');
         else
             save_amp_bias_txt = fopen(net_path+"/save_amp.txt",'a');
         end
         fprintf(save_amp_bias_txt," amp = %f , bias = %f ,bandpower = %f \n" , save_amp(i), bias_save(i), band_power(i));
-        if i == test_num
+        if i == length(save_amp)
             fprintf(save_amp_bias_txt," load begin = %d , load end = %d  \n" , load_begin,load_end);
         end
         fclose(save_amp_bias_txt);

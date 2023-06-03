@@ -74,7 +74,7 @@ for i = 1:numel(bias_loop_data)
 end
 for i = 1:numel(xTrain)
     xTrain{i} = toeplitz(xTrain{i}(h_order:-1:1),xTrain{i}(h_order:end));
-    xTrain{i} = [xTrain{i}; bias_all(floor((i-1)/trainNum)+1)*ones(1,size(xTrain{i},2) )];
+    xTrain{i} = [xTrain{i}; bias_loop_data(floor((i-1)/trainNum)+1)*ones(1,size(xTrain{i},2) )];
     yTrain{i} = reshape(yTrain{i}(1:split_length*rate_times),outputSize,split_length);
     yTrain{i} = yTrain{i}(:,1:size(xTrain{i},2));
 end
@@ -84,7 +84,7 @@ for i = 1:test_num
     ytop_tem = eval(['yTest',num2str(i)]);
     for j = 1:numel(xtop_tem)
         xtop_tem{j} = toeplitz(xtop_tem{j}(h_order:-1:1),xtop_tem{j}(h_order:end));
-        xtop_tem{j} = [xtop_tem{j}; bias_all(i)*ones(1,size(xtop_tem{j},2) )];
+        xtop_tem{j} = [xtop_tem{j}; bias_loop_data(i)*ones(1,size(xtop_tem{j},2) )];
         ytop_tem{j} = reshape(ytop_tem{j}(1:split_length*rate_times),outputSize,split_length);
         ytop_tem{j} = ytop_tem{j}(:,1:size(xtop_tem{j},2));
     end

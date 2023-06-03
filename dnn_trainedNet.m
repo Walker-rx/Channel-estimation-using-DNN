@@ -25,23 +25,26 @@ bias_scope = bias_begin : bias_step : bias_end;
 bias_loop_num = (bias_end-bias_begin)/bias_step+1;
 bias_loop_num = round(bias_loop_num);
 
-amp_scope = [0.1613 0.32106 0.48082 0.64058 0.8003 1];
+% amp_scope = [0.1613 0.32106 0.48082 0.64058 0.8003 1];
+amp_scope = [0.005 0.007 0.015 0.024 0.034 0.045 0.08 0.18 0.25 0.3];
 amp_loop_num = numel(amp_scope) ;
 
-load_begin = 301;
-load_end = 350;
+load_begin = 61;
+load_end = 80;
 data_num = load_end-load_begin+1;
 train_percent = 0.05;
 
-folder = '4.14';
-save_path = "data_save/light_data_"+folder;
+save_folder = '5.21';
+data_folder = '5.21';
+net_folder = '5.31';
 
-ver = 8;
-net_folder = 4.29;
+save_path = "data_save/light_data_"+save_folder;
+data_path_ini = "/home/xliangseu/ruoxu/equalization-using-DNN/data_save/light_data_"+data_folder;
 
+ver = 5;
 
 %% Loop parameter settings
-total_ver = 30;
+total_ver = 10;
 for net_ver = 1:total_ver
     net_type = [ver,1,net_ver];
     net_path = save_path + "/result1/"+net_folder+"/mix_bias_amp/Threenonlinear"+net_type(1)+"/net/looptime"+net_type(2)+"/net"+net_type(3);
@@ -58,7 +61,7 @@ for net_ver = 1:total_ver
         save_bias = zeros(1,round(bias_loop_num));
 
 
-        data_path = save_path + "/data/10M/amp"+amp;
+        data_path = data_path_ini + "/data/10M/amp"+amp;
         
         savePath_txt = save_path + "/result3/"+t.Month+"."+t.Day+"/trainedNet/v"+ver+"/amp"+amp+"/net"+net_ver;
         savePath_mat = save_path + "/result3/"+t.Month+"."+t.Day+"/trainedNet/v"+ver+"/amp"+amp+"/net"+net_ver;
@@ -143,7 +146,7 @@ for net_ver = 1:total_ver
             for j = 1:bias_loop_num
                 x_fortest = eval(['xTest_',num2str(j)]);
                 y_fortest = eval(['yTest_',num2str(j)]);
-        %%
+        %% Custom network
                 x_fortest = cell2mat(x_fortest);
                 y_fortest = cell2mat(y_fortest);
 
@@ -166,12 +169,13 @@ for net_ver = 1:total_ver
                 y_hatT = y_hat;
                 nmseNum_fun = @(hat,exp)10*log10(sum(sum((hat-exp).^2))/sum(sum(exp.^2)));
                 nmseNum = nmseNum_fun(y_hatT,y_fortest);
+
+        %% Default network
+%                 y_hat = predict(net,x_fortest,'MiniBatchSize',miniBatchSize);
+%                 y_hatT = y_hat.';
+%                 nmseNum = cellfun(@(hat,exp)10*log10(sum(sum((hat-exp).^2))/sum(sum(exp.^2))),y_hatT,y_fortest);
+                
         %%
-
-        %         y_hat = predict(net,x_fortest,'MiniBatchSize',miniBatchSize);
-        %         y_hatT = y_hat.';
-        %         nmseNum = cellfun(@(hat,exp)10*log10(sum(sum((hat-exp).^2))/sum(sum(exp.^2))),y_hatT,y_fortest);
-
                 nmse_loop = mean(nmseNum);
                 eval([['nmse',num2str(j),'_mat(',num2str(i),')'],'=nmse_loop;']);
 
@@ -179,10 +183,10 @@ for net_ver = 1:total_ver
 %                 plot(y_fortest{6}(6,10:35))
 %                 hold 
 %                 plot(y_hatT{6}(6,10:35))
-                figure
-                plot(y_fortest(6,10:35))
-                hold 
-                plot(y_hatT(6,10:35))
+%                 figure
+%                 plot(y_fortest(6,10:35))
+%                 hold 
+%                 plot(y_hatT(6,10:35))
                 fprintf(" amp = %d/%d , net = v%d/%d, looptime = %d/%d , bias num = %d/%d \n",amp_loop,amp_loop_num,net_ver,total_ver,i,looptime,j,bias_loop_num);
                 pause(3)
                 close all       

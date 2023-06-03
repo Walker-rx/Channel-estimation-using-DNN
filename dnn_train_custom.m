@@ -49,20 +49,6 @@ function [ dlnet, velocity, losss, learnRate_save ] = dnn_train_custom(maxEpochs
             end
             clear X Y dlX dlY
             
-%             if mod(i,validationFrequency) == 0
-%                 [~,~,loss_validation] = dlfeval(@modelGradientss,dlnet,dlXValidation,dlYValidation);
-%                 loss_validation = gather(extractdata(loss_validation));
-%                 if valid_loss <= loss_validation
-%                     valid_num = valid_num+1;
-%                     fprintf(" valid num = %d , minimum loss = %e , valid num changed \n",valid_num,valid_loss);
-%                 else
-%                     valid_loss = loss_validation;
-%                     fprintf(" valid num = %d , minimum loss = %e , valid num not changed \n",valid_num,valid_loss);
-%                 end
-%             end
-%             if valid_num == 60
-%                 return
-%             end
         end
     
         if mod(epoch,LearnRateDropPeriod) == 0

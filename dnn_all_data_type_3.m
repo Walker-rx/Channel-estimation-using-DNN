@@ -8,7 +8,7 @@ folder = '5.21';
 load_path_ini = "/home/xliangseu/ruoxu/equalization-using-DNN/data_save/light_data_"+folder;
 save_path = "data_save/light_data_"+folder;
 
-ver = 6;
+ver = 4;
 savePath_txt = save_path + "/result1/"+t.Month+"."+t.Day+"/mix_bias_amp/Threenonlinear"+ver;   
 savePath_mat = save_path + "/result1/"+t.Month+"."+t.Day+"/mix_bias_amp/Threenonlinear"+ver; 
 if(~exist(savePath_txt,'dir'))
@@ -53,7 +53,7 @@ for train_loop_time = 1:total_loop_time
     for load_scope = 1:numel(data_scope)
         clearvars -except total_loop_time train_loop_time load_scope save_path savePath_mat savePath_txt ...
             bias_scope amp_scope_ini data_scope loop_train_num train_percent train_time total_data_num total_loss total_learnRate ...
-            velocity averageGrad averageSqGrad tStart tic load_path_ini total_cell
+            velocity averageGrad averageSqGrad tStart tic load_path_ini
         pause(10)
         %%
         ori_rate = 10e6;
@@ -91,76 +91,45 @@ for train_loop_time = 1:total_loop_time
         for data_loop = 1:numel(data)
             load_bias_amp_custom_2
         end
-        
+
+        %% Shuffling data
+        Train_cell_num = numel(xTrain);
+        X = xTrain;
+        Y = yTrain;
+        X = cell2mat(X);
+        Y = cell2mat(Y);
+        numOber = size(X,2);
+        idx = randperm(numOber);
+        X = X(:,idx);
+        Y = Y(:,idx);
+        X = mat2cell(X,size(X,1),repmat(size(X,2)/Train_cell_num,1,Train_cell_num));
+        Y = mat2cell(Y,size(Y,1),repmat(size(Y,2)/Train_cell_num,1,Train_cell_num));
+        xTrain = X;
+        yTrain = Y;
+
+        Validation_cell_num = numel(xValidation);
+        X = xValidation;
+        Y = yValidation;
+        X = cell2mat(X);
+        Y = cell2mat(Y);
+        numOber = size(X,2);
+        idx = randperm(numOber);
+        X = X(:,idx);
+        Y = Y(:,idx);
+        X = mat2cell(X,size(X,1),repmat(size(X,2)/Validation_cell_num,1,Validation_cell_num));
+        Y = mat2cell(Y,size(Y,1),repmat(size(Y,2)/Validation_cell_num,1,Validation_cell_num));
+        xValidation = X;
+        yValidation = Y;
+        clear X Y idx
+
         %% Initialize network
-        xTrain = cell2mat(xTrain);
-        yTrain = cell2mat(yTrain);
-        xValidation = cell2mat(xValidation);
-        yValidation = cell2mat(yValidation);
-        shuffle_index_valid = randperm(size(xValidation,2));
-        xValidation = xValidation(:,shuffle_index_valid);
-        yValidation = yValidation(:,shuffle_index_valid);
-
-        numOber = size(xTrain,2);
-%         miniBatchSize = 80000/4;
-%         numIterPerEpoch = floor(numOber/miniBatchSize);
-%         validationFrequency = floor(numel(xTrain)/miniBatchSize/2);       
-        numIterPerEpoch = 400;
-        miniBatchSize = floor(numOber/numIterPerEpoch);
-        validationFrequency = floor(numIterPerEpoch/4);
-
-        layers = [...
-            sequenceInputLayer(inputSize)
-            fullyConnectedLayer(numHiddenUnits)
-            fullyConnectedLayer(numHiddenUnits)
-            reluLayer % 1
-            fullyConnectedLayer(numHiddenUnits)
-            reluLayer % 2
-            fullyConnectedLayer(numHiddenUnits)
-            sigmoidLayer % 3
-            fullyConnectedLayer(outputSize)];
-
-        lgraph = layerGraph(layers);
-        dlnet = dlnetwork(lgraph);
+        miniBatchSize = floor(numel(xTrain)/400);
+        validationFrequency = floor(numel(xTrain)/miniBatchSize/4);
+        dnn_option
 
         %% Train network
-        net_path = savePath_mat+"/net/looptime"+train_loop_time+"/net"+train_time;
-        if(~exist(net_path,'dir'))
-            mkdir(char(net_path));
-        end
-        tic
-        [ dlnet, velocity, losss, learnRate_save ] = dnn_train_custom_2(maxEpochs, numOber, xTrain, yTrain, xValidation, yValidation , ...
-                                                        numIterPerEpoch, miniBatchSize, dlnet, velocity, inilearningRate, momentum,train_loop_time, train_time, LearnRateDropPeriod, LearnRateDropFactor, validationFrequency);
-        toc
-        total_loss{train_time} = losss.';
-        total_learnRate{train_time} = learnRate_save.';
-        save(net_path+"/net.mat",'dlnet');  % Save the trained network
-
-        %% Save data
-        for i = 1:length(save_amp)
-            if i == 1
-                save_amp_bias_txt = fopen(net_path+"/save_amp.txt",'w');
-            else
-                save_amp_bias_txt = fopen(net_path+"/save_amp.txt",'a');
-            end
-            fprintf(save_amp_bias_txt," amp = %f , bias = %f ,bandpower = %f \n" , save_amp(i), bias_save(i), band_power(i));
-            if i == length(save_amp)
-                fprintf(save_amp_bias_txt," data load begin = %d , load end = %d  \n" , load_begin,load_end);
-            end
-            fclose(save_amp_bias_txt);
-        end
-
-        if train_time == loop_train_num
-            save(savePath_mat+"/net/looptime"+train_loop_time+"/loss.mat","total_loss");
-            save(savePath_mat+"/net/looptime"+train_loop_time+"/learnRate.mat","total_learnRate");
-        end
-
-%         for i =1:test_num
-%             eval(['clear xTest',num2str(i)])
-%             eval(['clear yTest',num2str(i)])
-%             eval(['clear xValid',num2str(i)])
-%             eval(['clear yValid',num2str(i)])
-%         end
+        dnn_train_default(train_time, savePath_mat, xTrain, yTrain, layers, options, test_num,...
+            save_amp, bias_save, band_power, load_begin, load_end);
             
     end
 end
@@ -168,7 +137,7 @@ end
 
 save_parameter = fopen(savePath_txt+"/save_parameter.txt",'w');
 fprintf(save_parameter,"\n \n");
-fprintf(save_parameter," Custom_2 training \n");
+fprintf(save_parameter," Type_3 training \n");
 fprintf(save_parameter," Threenonlinear ,\r\n 400 iteration per epoch , \r\n ");
 fprintf(save_parameter,"ini learningRate = %e ,\r\n DropPeriod = %d , DropFactor = %f ,\r\n ",inilearningRate,LearnRateDropPeriod, LearnRateDropFactor);
 fprintf(save_parameter,"amp =");
@@ -190,7 +159,7 @@ fprintf(save_parameter," Add zero num = %d \n",add_zero);
 fclose(save_parameter);
 
 
-fprintf("\n Training end ..." + ... 
+fprintf("\n Training end ..." + ...
     "\n Threenonlinear , ini learningRate = %e , min batch size = %d , DropPeriod = %d , DropFactor = %f , data_num = %d \n",...
     inilearningRate, miniBatchSize, LearnRateDropPeriod, LearnRateDropFactor, data_num);
 fprintf(" result saved in %s \n",savePath_mat);

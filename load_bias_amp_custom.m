@@ -16,7 +16,7 @@ for row_loop = 1:size(data_tmp,1)
     for bias_loop = 1:length(bias_loop_data)
         bias_folder = bias_loop_data(bias_loop);
         test_num = test_num + 1;
-        load_path = save_path + "/data/10M/amp"+amp_folder+"/bias"+bias_folder+"/mat";
+        load_path = load_path_ini + "/data/10M/amp"+amp_folder+"/bias"+bias_folder+"/mat";
         fprintf(" %d looptimes , %d training times , load amp = %f , bias = %d , \n load begin = %d , load end = %d \n",...
             train_loop_time,train_time,amp_folder,bias_folder,load_begin,load_end);
         load_data
@@ -67,7 +67,7 @@ end
 %%  Reshape data
 for i = 1:numel(xTrain)
     xTrain{i} = toeplitz(xTrain{i}(h_order:-1:1),xTrain{i}(h_order:end));
-    xTrain{i} = [xTrain{i}; single( bias_all(floor((i-1)/trainNum)+1) )*ones(1,size(xTrain{i},2) )];
+    xTrain{i} = [xTrain{i}; single( bias_loop_data(floor((i-1)/trainNum)+1) )*ones(1,size(xTrain{i},2) )];
     yTrain{i} = reshape(yTrain{i}(1:split_length*rate_times),outputSize,split_length);
     yTrain{i} = yTrain{i}(:,1:size(xTrain{i},2));
 end
@@ -77,7 +77,7 @@ for i = 1:test_num
     ytop_tem = eval(['yTest',num2str(i)]);
     for j = 1:numel(xtop_tem)
         xtop_tem{j} = toeplitz(xtop_tem{j}(h_order:-1:1),xtop_tem{j}(h_order:end));
-        xtop_tem{j} = [xtop_tem{j}; single( bias_all(i) )*ones(1,size(xtop_tem{j},2) )];
+        xtop_tem{j} = [xtop_tem{j}; single( bias_loop_data(i) )*ones(1,size(xtop_tem{j},2) )];
         ytop_tem{j} = reshape(ytop_tem{j}(1:split_length*rate_times),outputSize,split_length);
         ytop_tem{j} = ytop_tem{j}(:,1:size(xtop_tem{j},2));
     end
