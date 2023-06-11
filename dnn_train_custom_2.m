@@ -60,7 +60,7 @@ function [ dlnet, velocity, losss, learnRate_save ] = dnn_train_custom(maxEpochs
                     fprintf(" valid num = %d , minimum loss = %e , valid num not changed \n",valid_num,valid_loss);
                 end
             end
-            if valid_num == 100
+            if valid_num == 60
                 return
             end
         end

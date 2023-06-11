@@ -8,7 +8,7 @@ folder = '5.21';
 load_path_ini = "/home/xliangseu/ruoxu/equalization-using-DNN/data_save/light_data_"+folder;
 save_path = "data_save/light_data_"+folder;
 
-ver = 4;
+ver = 7777;
 savePath_txt = save_path + "/result1/"+t.Month+"."+t.Day+"/mix_bias_amp/Threenonlinear"+ver;   
 savePath_mat = save_path + "/result1/"+t.Month+"."+t.Day+"/mix_bias_amp/Threenonlinear"+ver; 
 if(~exist(savePath_txt,'dir'))
@@ -67,7 +67,7 @@ for train_loop_time = 1:total_loop_time
 
         inputSize = h_order+1;
 %         numHiddenUnits = 60;
-        numHiddenUnits = 200;
+        numHiddenUnits = 60;
         outputSize = rate_times;  % y=h*x+n;  y:(outputSize,m) h:(outputSize,inputSize) x:(inputSize,m)
         maxEpochs = 60;
         LearnRateDropPeriod = 8;
@@ -128,9 +128,10 @@ for train_loop_time = 1:total_loop_time
         dnn_option
 
         %% Train network
+        tic
         dnn_train_default(train_time, savePath_mat, xTrain, yTrain, layers, options, test_num,...
             save_amp, bias_save, band_power, load_begin, load_end);
-            
+        toc    
     end
 end
 %% Save data

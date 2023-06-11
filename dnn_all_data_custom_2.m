@@ -8,7 +8,7 @@ folder = '5.21';
 load_path_ini = "/home/xliangseu/ruoxu/equalization-using-DNN/data_save/light_data_"+folder;
 save_path = "data_save/light_data_"+folder;
 
-ver = 6;
+ver = 9;
 savePath_txt = save_path + "/result1/"+t.Month+"."+t.Day+"/mix_bias_amp/Threenonlinear"+ver;   
 savePath_mat = save_path + "/result1/"+t.Month+"."+t.Day+"/mix_bias_amp/Threenonlinear"+ver; 
 if(~exist(savePath_txt,'dir'))
@@ -66,8 +66,7 @@ for train_loop_time = 1:total_loop_time
         split_num = 10;  % Cut a signal into split_num shares
 
         inputSize = h_order+1;
-%         numHiddenUnits = 60;
-        numHiddenUnits = 200;
+        numHiddenUnits = 60;       
         outputSize = rate_times;  % y=h*x+n;  y:(outputSize,m) h:(outputSize,inputSize) x:(inputSize,m)
         maxEpochs = 60;
         LearnRateDropPeriod = 8;

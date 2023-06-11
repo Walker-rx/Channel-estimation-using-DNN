@@ -36,12 +36,12 @@ train_percent = 0.05;
 
 save_folder = '5.21';
 data_folder = '5.21';
-net_folder = '5.31';
+net_folder = '6.7';
 
 save_path = "data_save/light_data_"+save_folder;
 data_path_ini = "/home/xliangseu/ruoxu/equalization-using-DNN/data_save/light_data_"+data_folder;
 
-ver = 5;
+ver = 8;
 
 %% Loop parameter settings
 total_ver = 10;
