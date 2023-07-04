@@ -1,16 +1,15 @@
 layers = [...
     sequenceInputLayer(inputSize)
     fullyConnectedLayer(numHiddenUnits)
-    fullyConnectedLayer(numHiddenUnits)
     reluLayer % 1
     fullyConnectedLayer(numHiddenUnits)
     reluLayer % 2
     fullyConnectedLayer(numHiddenUnits)
     sigmoidLayer % 3
-    %     fullyConnectedLayer(numHiddenUnits)
-    %     reluLayer % 4
-    %     fullyConnectedLayer(numHiddenUnits)
-    %     reluLayer % 5
+    fullyConnectedLayer(numHiddenUnits)
+    reluLayer % 4
+    fullyConnectedLayer(numHiddenUnits)
+    reluLayer % 5
     fullyConnectedLayer(outputSize)
     regressionLayer];
 
@@ -28,5 +27,5 @@ options = trainingOptions('adam', ...
     'ValidationPatience',30,...
     'Verbose',true,...
     'InitialLearnRate',inilearningRate);
-%         'Plots','training-progress');
+    % 'Plots','training-progress');
 % 'ExecutionEnvironment','gpu',...

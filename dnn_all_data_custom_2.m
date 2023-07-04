@@ -4,11 +4,12 @@ close all
 tStart = tic;
 
 t = datetime('now');
-folder = '5.21';
-load_path_ini = "/home/xliangseu/ruoxu/equalization-using-DNN/data_save/light_data_"+folder;
+folder = '6.18';
+% load_path_ini = "/home/xliangseu/ruoxu/equalization-using-DNN/data_save/light_data_"+folder;.
+load_path_ini = "/home/oem/Users/ruoxu/equalization-using-DNN/data_save/light_data_"+folder;
 save_path = "data_save/light_data_"+folder;
 
-ver = 9;
+ver = 11111;
 savePath_txt = save_path + "/result1/"+t.Month+"."+t.Day+"/mix_bias_amp/Threenonlinear"+ver;   
 savePath_mat = save_path + "/result1/"+t.Month+"."+t.Day+"/mix_bias_amp/Threenonlinear"+ver; 
 if(~exist(savePath_txt,'dir'))
@@ -56,11 +57,10 @@ for train_loop_time = 1:total_loop_time
             velocity averageGrad averageSqGrad tStart tic load_path_ini total_cell
         pause(10)
         %%
-        ori_rate = 10e6;
+        ori_rate = 30e6;
         rec_rate = 60e6;
         rate_times = rec_rate/ori_rate;
-        related_num = 8;
-        h_order = rate_times*related_num;
+        h_order = 30;
         add_zero = h_order/2;
 
         split_num = 10;  % Cut a signal into split_num shares
@@ -183,7 +183,7 @@ fprintf(save_parameter,"\r\n");
 fprintf(save_parameter," data num = %d , split num = %d , train num = %d\r\n",total_cell,split_num,total_cell*split_num*train_percent);
 fprintf(save_parameter," validationFrequency is floor(numIterPerEpoch/4) \n");
 fprintf(save_parameter," origin rate = %e , receive rate = %e \n",ori_rate,rec_rate);
-fprintf(save_parameter," H order = %d ,related num = %d \n",h_order,related_num);
+fprintf(save_parameter," H order = %d \n",h_order);
 fprintf(save_parameter," Hidden Units = %d \n",numHiddenUnits);
 fprintf(save_parameter," Add zero num = %d \n",add_zero);
 fclose(save_parameter);

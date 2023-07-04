@@ -18,7 +18,7 @@ for row_loop = 1:size(data_tmp,1)
     for bias_loop = 1:length(bias_loop_data)
         bias_folder = bias_loop_data(bias_loop);
         test_num = test_num + 1;
-        load_path = load_path_ini + "/data/10M/amp"+amp_folder+"/bias"+bias_folder+"/mat";
+        load_path = load_path_ini + "/data/"+ori_rate/1e6+"M/amp"+amp_folder+"/bias"+bias_folder+"/mat";
         fprintf(" %d looptimes , %d training times , load amp = %f , bias = %d , \n load begin = %d , load end = %d \n",...
             train_loop_time,train_time,amp_folder,bias_folder,load_begin,load_end);
         load_data
@@ -49,7 +49,8 @@ end
 
 %%  Normalize data
 test_num = round(test_num);
-load_norm_path = "data_save/light_data_3.10/data/10M/rand_bias0.3/";
+% load_norm_path = "data_save/light_data_3.10/data/10M/rand_bias0.3/";
+load_norm_path = "/home/oem/Users/ruoxu/channel-estimation-using-DNN/data_save/norm_factor/";
 norm_mat = load(load_norm_path+"/save_norm.mat");
 norm_names = fieldnames(norm_mat);
 norm_factor = gather(eval(strcat('norm_mat.',norm_names{1})));
@@ -57,7 +58,7 @@ norm_factor = gather(eval(strcat('norm_mat.',norm_names{1})));
 xTrain_loop = cellfun(@(cell1)(cell1*norm_factor),xTrain_loop,'UniformOutput',false);
 
 for i = 1:test_num
-    band_power = [band_power bandpower(xTrain_loop{10+(i-1)*trainNum})];
+    band_power = [band_power bandpower(xTrain_loop{ceil(trainNum/2)+(i-1)*trainNum})];
 end
 
 for i = 1:test_num
@@ -93,8 +94,13 @@ end
 for i = 1:test_num
     xValidation_tem = eval(['xTest',num2str(i)]);
     yValidation_tem = eval(['yTest',num2str(i)]);
-    xValidation = [xValidation,xValidation_tem{1},xValidation_tem{2}];
-    yValidation = [yValidation,yValidation_tem{1},yValidation_tem{2}];
+    if numel(xValidation_tem)>1
+        xValidation = [xValidation,xValidation_tem{1},xValidation_tem{2}];
+        yValidation = [yValidation,yValidation_tem{1},yValidation_tem{2}];
+    else
+        xValidation = [xValidation,xValidation_tem{1}];
+        yValidation = [yValidation,yValidation_tem{1}];
+    end
 end
 xTrain = [xTrain xTrain_loop];
 yTrain = [yTrain yTrain_loop];

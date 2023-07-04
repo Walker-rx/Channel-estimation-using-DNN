@@ -1,14 +1,14 @@
 clear
 close all
+gpuDevice(1)
 
 t = datetime('now');
 
 %% Network parameters
-ori_rate = 10e6;
+ori_rate = 30e6;
 rec_rate = 60e6;
 rate_times = rec_rate/ori_rate;
-related_num = 8;
-h_order = rate_times*related_num;
+h_order = 30;
 add_zero = h_order/2;
  
 split_num = 10;  % Cut a signal into split_num shares
@@ -20,13 +20,13 @@ miniBatchSize = 40;
 
 bias_begin = 0.05;
 bias_step = 0.04;
-bias_end = 0.85;
+bias_end = 1.05;
 bias_scope = bias_begin : bias_step : bias_end;
 bias_loop_num = (bias_end-bias_begin)/bias_step+1;
 bias_loop_num = round(bias_loop_num);
 
 % amp_scope = [0.1613 0.32106 0.48082 0.64058 0.8003 1];
-amp_scope = [0.005 0.007 0.015 0.024 0.034 0.045 0.08 0.18 0.25 0.3];
+amp_scope = [0.005 0.007 0.015 0.024 0.034 0.045 0.08 0.18 0.25 0.3 0.48082 0.64058 0.8003 1];
 amp_loop_num = numel(amp_scope) ;
 
 load_begin = 61;
@@ -34,17 +34,17 @@ load_end = 80;
 data_num = load_end-load_begin+1;
 train_percent = 0.05;
 
-save_folder = '5.21';
-data_folder = '5.21';
-net_folder = '6.7';
+save_folder = '6.18';
+data_folder = '6.18';
+net_folder = '6.20';
 
 save_path = "data_save/light_data_"+save_folder;
-data_path_ini = "/home/xliangseu/ruoxu/equalization-using-DNN/data_save/light_data_"+data_folder;
+data_path_ini = "/home/oem/Users/ruoxu/equalization-using-DNN/data_save/light_data_"+data_folder;
 
-ver = 8;
+ver = 3;
 
 %% Loop parameter settings
-total_ver = 10;
+total_ver = 20;
 for net_ver = 1:total_ver
     net_type = [ver,1,net_ver];
     net_path = save_path + "/result1/"+net_folder+"/mix_bias_amp/Threenonlinear"+net_type(1)+"/net/looptime"+net_type(2)+"/net"+net_type(3);
@@ -61,7 +61,7 @@ for net_ver = 1:total_ver
         save_bias = zeros(1,round(bias_loop_num));
 
 
-        data_path = data_path_ini + "/data/10M/amp"+amp;
+        data_path = data_path_ini + "/data/"+ori_rate/1e6+"M/amp"+amp;
         
         savePath_txt = save_path + "/result3/"+t.Month+"."+t.Day+"/trainedNet/v"+ver+"/amp"+amp+"/net"+net_ver;
         savePath_mat = save_path + "/result3/"+t.Month+"."+t.Day+"/trainedNet/v"+ver+"/amp"+amp+"/net"+net_ver;
@@ -99,8 +99,9 @@ for net_ver = 1:total_ver
         
         %%  Normalize data
 
-        load_path = "data_save/light_data_3.10/data/10M/rand_bias0.3/";
-        norm_mat = load(load_path+"/save_norm.mat");
+        % load_path = "data_save/light_data_3.10/data/10M/rand_bias0.3/";
+        load_norm_path = "/home/oem/Users/ruoxu/channel-estimation-using-DNN/data_save/norm_factor/";
+        norm_mat = load(load_norm_path+"/save_norm.mat");
         norm_names = fieldnames(norm_mat);
         norm_factor = gather(eval(strcat('norm_mat.',norm_names{1})));
 
@@ -147,33 +148,33 @@ for net_ver = 1:total_ver
                 x_fortest = eval(['xTest_',num2str(j)]);
                 y_fortest = eval(['yTest_',num2str(j)]);
         %% Custom network
-                x_fortest = cell2mat(x_fortest);
-                y_fortest = cell2mat(y_fortest);
-
-                x_fortest(:,:,1) = x_fortest;
-                y_fortest(:,:,1) = y_fortest;
-                x_fortest = dlarray(single(x_fortest),'CBT');
-                y_fortest = dlarray(single(y_fortest),'CBT');
-                x_fortest = gpuArray(x_fortest);
-                y_fortest = gpuArray(y_fortest);
-                miniBatchSize = dlarray(miniBatchSize);
-
-                y_hat = predict(dlnet,x_fortest);
-
-                y_fortest = extractdata(y_fortest);
-                y_hat = extractdata(y_hat);
-                y_fortest = gather(y_fortest);
-                y_hat = gather(y_hat);
-                y_fortest = double(y_fortest);
-                y_hat = double(y_hat);
-                y_hatT = y_hat;
-                nmseNum_fun = @(hat,exp)10*log10(sum(sum((hat-exp).^2))/sum(sum(exp.^2)));
-                nmseNum = nmseNum_fun(y_hatT,y_fortest);
+                % x_fortest = cell2mat(x_fortest);
+                % y_fortest = cell2mat(y_fortest);
+                % 
+                % x_fortest(:,:,1) = x_fortest;
+                % y_fortest(:,:,1) = y_fortest;
+                % x_fortest = dlarray(single(x_fortest),'CBT');
+                % y_fortest = dlarray(single(y_fortest),'CBT');
+                % x_fortest = gpuArray(x_fortest);
+                % y_fortest = gpuArray(y_fortest);
+                % miniBatchSize = dlarray(miniBatchSize);
+                % 
+                % y_hat = predict(dlnet,x_fortest);
+                % 
+                % y_fortest = extractdata(y_fortest);
+                % y_hat = extractdata(y_hat);
+                % y_fortest = gather(y_fortest);
+                % y_hat = gather(y_hat);
+                % y_fortest = double(y_fortest);
+                % y_hat = double(y_hat);
+                % y_hatT = y_hat;
+                % nmseNum_fun = @(hat,exp)10*log10(sum(sum((hat-exp).^2))/sum(sum(exp.^2)));
+                % nmseNum = nmseNum_fun(y_hatT,y_fortest);
 
         %% Default network
-%                 y_hat = predict(net,x_fortest,'MiniBatchSize',miniBatchSize);
-%                 y_hatT = y_hat.';
-%                 nmseNum = cellfun(@(hat,exp)10*log10(sum(sum((hat-exp).^2))/sum(sum(exp.^2))),y_hatT,y_fortest);
+                y_hat = predict(net,x_fortest,'MiniBatchSize',miniBatchSize);
+                y_hatT = y_hat.';
+                nmseNum = cellfun(@(hat,exp)10*log10(sum(sum((hat-exp).^2))/sum(sum(exp.^2))),y_hatT,y_fortest);
                 
         %%
                 nmse_loop = mean(nmseNum);

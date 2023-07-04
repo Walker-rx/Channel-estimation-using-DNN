@@ -4,11 +4,12 @@ close all
 tStart = tic;
 
 t = datetime('now');
-folder = '5.21';
-load_path_ini = "/home/xliangseu/ruoxu/equalization-using-DNN/data_save/light_data_"+folder;
+folder = '6.18';
+% load_path_ini = "/home/xliangseu/ruoxu/equalization-using-DNN/data_save/light_data_"+folder;
+load_path_ini = "/home/oem/Users/ruoxu/equalization-using-DNN/data_save/light_data_"+folder;
 save_path = "data_save/light_data_"+folder;
 
-ver = 7777;
+ver = 4444;
 savePath_txt = save_path + "/result1/"+t.Month+"."+t.Day+"/mix_bias_amp/Threenonlinear"+ver;   
 savePath_mat = save_path + "/result1/"+t.Month+"."+t.Day+"/mix_bias_amp/Threenonlinear"+ver; 
 if(~exist(savePath_txt,'dir'))
@@ -19,14 +20,14 @@ if(~exist(savePath_mat,'dir'))
 end
 
 %% Network parameters
-bias_scope = 0.05:0.04:0.85;
-amp_scope_ini = [0.005 0.007 0.015 0.024 0.034 0.045 0.08 0.18 0.25 0.3];
+bias_scope = 0.05:0.04:1.05;
+amp_scope_ini = [0.005 0.007 0.015 0.024 0.034 0.045 0.08 0.18 0.25 0.3 0.48082 0.64058 0.8003 1];
 % amp_scope_ini = [0.1613 0.32106 0.48082 0.64058 0.8003 1];
 
 total_cell = 60;
 total_data_num = total_cell;
 
-loop_data_num = ceil(21*50/(length(bias_scope)*length(amp_scope_ini)))+1;
+loop_data_num = floor(21*50/(length(bias_scope)*length(amp_scope_ini)))+1;
 if loop_data_num>30
     loop_data_num = 30;
 end
@@ -56,18 +57,16 @@ for train_loop_time = 1:total_loop_time
             velocity averageGrad averageSqGrad tStart tic load_path_ini
         pause(10)
         %%
-        ori_rate = 10e6;
+        ori_rate = 30e6;
         rec_rate = 60e6;
         rate_times = rec_rate/ori_rate;
-        related_num = 8;
-        h_order = rate_times*related_num;
+        h_order = 30;
         add_zero = h_order/2;
 
         split_num = 10;  % Cut a signal into split_num shares
 
         inputSize = h_order+1;
-%         numHiddenUnits = 60;
-        numHiddenUnits = 60;
+        numHiddenUnits = 150;
         outputSize = rate_times;  % y=h*x+n;  y:(outputSize,m) h:(outputSize,inputSize) x:(inputSize,m)
         maxEpochs = 60;
         LearnRateDropPeriod = 8;
@@ -154,7 +153,7 @@ fprintf(save_parameter,"\r\n");
 fprintf(save_parameter," data num = %d , split num = %d , train num = %d\r\n",total_cell,split_num,total_cell*split_num*train_percent);
 fprintf(save_parameter," validationFrequency is floor(numIterPerEpoch/4) \n");
 fprintf(save_parameter," origin rate = %e , receive rate = %e \n",ori_rate,rec_rate);
-fprintf(save_parameter," H order = %d ,related num = %d \n",h_order,related_num);
+fprintf(save_parameter," H order = %d \n",h_order);
 fprintf(save_parameter," Hidden Units = %d \n",numHiddenUnits);
 fprintf(save_parameter," Add zero num = %d \n",add_zero);
 fclose(save_parameter);
